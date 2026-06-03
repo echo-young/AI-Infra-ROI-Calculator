@@ -66,26 +66,18 @@ select:disabled {
 }
 
 .brand-mark {
-  display: grid;
-  place-items: center;
   width: 44px;
   height: 44px;
+  display: block;
   border-radius: 8px;
-  background: #d7a13d;
-  color: #17211b;
-  font-weight: 800;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px rgba(83, 231, 213, 0.24);
 }
 
 .brand h1 {
   margin: 0;
   font-size: 19px;
   letter-spacing: 0;
-}
-
-.brand p {
-  margin: 2px 0 0;
-  color: #b9c8bf;
-  font-size: 12px;
 }
 
 .nav-list {
@@ -187,6 +179,17 @@ select:disabled {
 
 .section-heading h3 {
   font-size: 21px;
+}
+
+.subsection-heading {
+  margin: 22px 0 14px;
+}
+
+.subsection-heading h4 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 17px;
+  letter-spacing: 0;
 }
 
 .kpi-grid,
@@ -427,6 +430,11 @@ th {
   background: #eef2ee;
   color: #405048;
   font-size: 12px;
+}
+
+td:last-child,
+th:last-child {
+  white-space: nowrap;
 }
 
 tbody tr:last-child td {

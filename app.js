@@ -75,10 +75,10 @@ const defaults = {
   networkOpex: 96,
   opsCost: 180,
   otherOpex: 48,
-  cardHourPrice: 18,
-  utilization: 58,
-  platformIncome: 120,
-  growthRate: 8,
+  policySubsidy: 300,
+  annualVoucher: 120,
+  deviceMonthlyRent: 18,
+  deviceLeaseRate: 58,
 };
 
 const textMaps = {
@@ -93,8 +93,8 @@ const textMaps = {
     mixed: "混合负载",
   },
   revenueMode: {
-    lease: "对外租赁运营",
-    saving: "自用降本替代",
+    lease: "裸设备租赁服务",
+    saving: "租赁 + 算力券协同",
   },
   modelScale: {
     small: "70B 以下 / 小规模微调",
@@ -183,10 +183,10 @@ function buildState() {
     networkOpex: numberValue("networkOpex"),
     opsCost: numberValue("opsCost"),
     otherOpex: numberValue("otherOpex"),
-    cardHourPrice: numberValue("cardHourPrice"),
-    utilization: numberValue("utilization") / 100,
-    platformIncome: numberValue("platformIncome"),
-    growthRate: numberValue("growthRate") / 100,
+    policySubsidy: numberValue("policySubsidy"),
+    annualVoucher: numberValue("annualVoucher"),
+    deviceMonthlyRent: numberValue("deviceMonthlyRent"),
+    deviceLeaseRate: numberValue("deviceLeaseRate") / 100,
   };
 }
 
@@ -337,22 +337,26 @@ function calculate(state) {
   const annualRackCost = state.rackCount * state.rackRent * 12;
   const annualOpex = annualPowerCost + annualRackCost + state.networkOpex + state.opsCost + state.otherOpex;
   const totalOpex = annualOpex * state.years;
-  const tco = capex + totalOpex;
+  const serviceCost = state.softwareCost + integrationCost + spareCost;
+  const netInvestment = Math.max(0, capex - state.policySubsidy);
+  const tco = netInvestment + totalOpex;
 
-  let cumulativeIncome = 0;
-  const annualCardIncome = (fabric.totalCards * state.cardHourPrice * 24 * 365 * state.utilization) / 10000;
-  for (let year = 0; year < state.years; year += 1) {
-    cumulativeIncome += (annualCardIncome + state.platformIncome) * Math.pow(1 + state.growthRate, year);
-  }
+  const annualRentalIncome = fabric.servers * state.deviceMonthlyRent * 12 * state.deviceLeaseRate;
+  const annualVoucherIncome = state.annualVoucher;
+  const cumulativeRentalIncome = annualRentalIncome * state.years;
+  const cumulativeVoucherIncome = annualVoucherIncome * state.years;
+  const cumulativeIncome = cumulativeRentalIncome + cumulativeVoucherIncome;
 
-  const annualAverageIncome = cumulativeIncome / state.years;
+  const annualAverageIncome = annualRentalIncome + annualVoucherIncome;
   const annualNetCash = annualAverageIncome - annualOpex;
-  const payback = annualNetCash > 0 ? capex / annualNetCash : Infinity;
+  const payback = annualNetCash > 0 ? netInvestment / annualNetCash : Infinity;
   const netProfit = cumulativeIncome - tco;
   const roi = tco > 0 ? netProfit / tco : 0;
   const annualCardCost = fabric.totalCards > 0 ? tco / state.years / fabric.totalCards : 0;
   const cardHourCost =
-    fabric.totalCards > 0 ? (tco * 10000) / (fabric.totalCards * 24 * 365 * state.years * state.utilization) : 0;
+    fabric.totalCards > 0 && state.deviceLeaseRate > 0
+      ? (tco * 10000) / (fabric.totalCards * 24 * 365 * state.years * state.deviceLeaseRate)
+      : 0;
 
   const bom = [
     ...fabric.bom,
@@ -398,13 +402,19 @@ function calculate(state) {
     ...fabric,
     computeCost,
     directHardware,
+    serviceCost,
     capex,
+    netInvestment,
     itPowerKw,
     annualPowerCost,
     annualRackCost,
     annualOpex,
     totalOpex,
     tco,
+    annualRentalIncome,
+    annualVoucherIncome,
+    cumulativeRentalIncome,
+    cumulativeVoucherIncome,
     cumulativeIncome,
     payback,
     netProfit,
@@ -456,6 +466,7 @@ function updateBom(bom) {
           <td>${row.quantity}</td>
           <td>${row.logic}</td>
           <td>${row.note}</td>
+          <td>${moneyWan(row.amount)}</td>
         </tr>
       `,
     )
@@ -471,24 +482,20 @@ function updateReport(state, result) {
 
   document.getElementById("reportPreview").innerHTML = `
     <article>
-      <h4>1. 项目概述</h4>
-      <p>${state.projectName} 位于 ${state.location}，采用 ${textMaps.computeRoute[state.computeRoute]} 路线，当前模块按 ${textMaps.workload[state.workload]} 场景设计 GPU 集群组网，测算周期为 ${state.years} 年。</p>
+      <h4>1. 方案规划</h4>
+      <p>${state.projectName} 位于 ${state.location}，采用 ${textMaps.computeRoute[state.computeRoute]} 路线，按 ${textMaps.workload[state.workload]} 场景规划 ${result.servers} 台 ${result.gpu.name} 8GPU 服务器模组，形成 ${result.topologyType}，训练网络采用 ${result.ibSpeed}G InfiniBand，目标收敛比 ${result.ratio}:1。</p>
     </article>
     <article>
-      <h4>2. 模块一组网结论</h4>
-      <p>建议部署 ${result.servers} 台 ${result.gpu.name} 8GPU 服务器模组，形成 ${result.topologyType}，训练网络采用 ${result.ibSpeed}G InfiniBand，目标收敛比 ${result.ratio}:1，集群 Dense FP16 峰值算力约 ${formatPf16(result.denseFp16Tflops)}。</p>
+      <h4>2. 投资估算</h4>
+      <p>硬件 BOM 投资约 ${moneyWan(result.directHardware)}，软件/服务成本约 ${moneyWan(result.serviceCost)}，含税初始 CAPEX 约 ${moneyWan(result.capex)}；年度 OPEX 约 ${moneyWan(result.annualOpex)}，主要由机柜、电力、负载、带宽、运维和保险构成。</p>
     </article>
     <article>
-      <h4>3. BOM 口径</h4>
-      <p>BOM 以表格呈现 GPU 服务器、IB Leaf/Spine、IB 线缆/光模块或 DAC/AOC、管理面交换机、软件、实施、备件和税费，保持方案估算级口径。</p>
+      <h4>3. 商务设计</h4>
+      <p>商务模式为${textMaps.revenueMode[state.revenueMode]}，政策补贴按一次性 ${moneyWan(state.policySubsidy)} 抵减 CAPEX，年度算力券按 ${moneyWan(state.annualVoucher)} 单独列示；裸设备租赁按每设备/月 ${moneyWan(state.deviceMonthlyRent)}、出租率/上架率 ${(state.deviceLeaseRate * 100).toFixed(1)}% 测算。</p>
     </article>
     <article>
-      <h4>4. 投资与收益预览</h4>
-      <p>初始投资约 ${moneyWan(result.capex)}，${state.years} 年 TCO 约 ${moneyWan(result.tco)}，按 ${textMaps.revenueMode[state.revenueMode]} 模式测算，累计收入/节省约 ${moneyWan(result.cumulativeIncome)}，ROI 为 ${percent(result.roi * 100)}，投资回收期为 ${paybackText}。</p>
-    </article>
-    <article>
-      <h4>5. 后续需要修正的数据</h4>
-      <p>建议优先替换真实服务器单价、IB 交换机型号、线缆/光模块单价、机柜功率、电价、PUE、税务口径和出租率，再用于正式商务测算。</p>
+      <h4>4. 投资收益评估</h4>
+      <p>政策补贴后净投资约 ${moneyWan(result.netInvestment)}，${state.years} 年 TCO 约 ${moneyWan(result.tco)}，累计裸设备租赁收入约 ${moneyWan(result.cumulativeRentalIncome)}，累计算力券收入/抵扣约 ${moneyWan(result.cumulativeVoucherIncome)}，净收益约 ${moneyWan(result.netProfit)}，ROI 为 ${percent(result.roi * 100)}，投资回收期为 ${paybackText}。</p>
     </article>
   `;
 }
@@ -519,6 +526,16 @@ function render() {
   document.getElementById("clusterMetric").textContent = `${result.servers} 台`;
   document.getElementById("topologyMetric").textContent = result.topologyType;
   document.getElementById("capexMetric").textContent = moneyWan(result.capex);
+  document.getElementById("hardwareCapexMetric").textContent = moneyWan(result.directHardware);
+  document.getElementById("serviceCostMetric").textContent = moneyWan(result.serviceCost);
+  document.getElementById("annualOpexMetric").textContent = moneyWan(result.annualOpex);
+  document.getElementById("netInvestmentMetric").textContent = moneyWan(result.netInvestment);
+  document.getElementById("rentalIncomeMetric").textContent = moneyWan(result.cumulativeRentalIncome);
+  document.getElementById("voucherIncomeMetric").textContent = moneyWan(result.cumulativeVoucherIncome);
+  document.getElementById("tcoMetric").textContent = moneyWan(result.tco);
+  document.getElementById("paybackMetric").textContent = Number.isFinite(result.payback)
+    ? `${result.payback.toFixed(1)} 年`
+    : "未回收";
   document.getElementById("annualCardCost").textContent = moneyWan(result.annualCardCost);
   document.getElementById("cardHourCost").textContent = moneyYuan(result.cardHourCost);
   document.getElementById("netProfit").textContent = moneyWan(result.netProfit);

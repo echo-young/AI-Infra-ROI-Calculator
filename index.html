@@ -3,36 +3,32 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GPU 集群组网测算工具</title>
+    <title>智算投资规划工具</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main class="app-shell">
       <aside class="sidebar">
         <div class="brand">
-          <span class="brand-mark">算</span>
+          <img class="brand-mark" src="assets/brand-tech-icon.png" alt="" aria-hidden="true" />
           <div>
-            <h1>算力中心测算</h1>
-            <p>GPU 组网工作台</p>
+            <h1>智算投资规划</h1>
           </div>
         </div>
 
         <nav class="nav-list" aria-label="模块导航">
-          <a href="#overview" class="active">模块路线</a>
-          <a href="#project">基础配置</a>
-          <a href="#design">模块一：组网</a>
-          <a href="#bom">模块一：BOM</a>
-          <a href="#opex">模块二：运营</a>
-          <a href="#revenue">模块三：收益</a>
-          <a href="#report">阶段输出</a>
+          <a href="#overview" class="active">方案规划</a>
+          <a href="#estimate">投资估算</a>
+          <a href="#commerce">商务设计</a>
+          <a href="#returns">投资收益评估</a>
         </nav>
       </aside>
 
       <section class="workspace">
         <header class="topbar">
           <div>
-            <span class="eyebrow">模块化 MVP</span>
-            <h2>先把 GPU 集群组网方案测准</h2>
+            <span class="eyebrow">四段式测算</span>
+            <h2>按方案、投资、商务、收益完成智算投资规划</h2>
           </div>
           <div class="actions">
             <button class="icon-button" id="resetBtn" title="重置参数" aria-label="重置参数">↺</button>
@@ -43,30 +39,30 @@
         <section id="overview" class="section-band">
           <div class="section-heading">
             <div>
-              <span class="eyebrow">模块路线</span>
-              <h3>按模块逐步成型</h3>
+              <span class="eyebrow">方案规划</span>
+              <h3>项目边界与集群方案</h3>
             </div>
           </div>
           <div class="module-grid" aria-label="模块拆分">
             <article class="module-card active-module">
-              <span>当前模块</span>
-              <strong>GPU 集群组网与 BOM</strong>
-              <p>按业务场景推荐单集群规模、IB 训练网络、管理面交换机和可复核的 BOM。</p>
+              <span>方案规划</span>
+              <strong>GPU 集群组网</strong>
+              <p>按业务场景推荐单集群规模、IB 训练网络、管理面交换机和硬件 BOM。</p>
             </article>
             <article class="module-card">
-              <span>下一模块</span>
-              <strong>IDC 租赁与运营</strong>
-              <p>围绕机柜、电力、PUE、带宽、运维服务形成年度 OPEX 模型。</p>
+              <span>投资估算</span>
+              <strong>CAPEX / OPEX</strong>
+              <p>CAPEX 基于硬件 BOM，OPEX 覆盖机柜、电力、负载、带宽和运维。</p>
             </article>
             <article class="module-card">
-              <span>后续模块</span>
-              <strong>收益与回收期</strong>
-              <p>区分对外租赁、自用降本、混合经营，再测 ROI、现金流和敏感性。</p>
+              <span>商务设计</span>
+              <strong>补贴与租赁计费</strong>
+              <p>纳入政策补贴、算力券和每设备/月裸设备租赁服务费。</p>
             </article>
             <article class="module-card">
-              <span>阶段产物</span>
-              <strong>报告与参数版本</strong>
-              <p>每个模块完成后生成独立结论，最后再汇总成完整方案。</p>
+              <span>收益评估</span>
+              <strong>ROI 与回收期</strong>
+              <p>输出净投资、TCO、租赁收入、算力券抵扣、净收益和回收期。</p>
             </article>
           </div>
           <div class="kpi-grid">
@@ -86,19 +82,14 @@
               <small>InfiniBand 优先</small>
             </article>
             <article class="metric-card">
-              <span>初始投资</span>
+              <span>CAPEX</span>
               <strong id="capexMetric">-</strong>
-              <small>组网 BOM 接入后续 TCO</small>
+              <small>硬件 BOM + 软件服务 + 税费</small>
             </article>
           </div>
-        </section>
 
-        <section id="project" class="section-band">
-          <div class="section-heading">
-            <div>
-              <span class="eyebrow">基础配置</span>
-              <h3>项目边界</h3>
-            </div>
+          <div class="subsection-heading">
+            <h4>项目边界</h4>
           </div>
           <div class="form-grid">
             <label>
@@ -125,31 +116,11 @@
                 <option value="mixed">混合负载</option>
               </select>
             </label>
-            <label>
-              测算周期
-              <select id="years">
-                <option value="3">三年</option>
-                <option value="5">五年</option>
-              </select>
-            </label>
-            <label>
-              收益模式
-              <select id="revenueMode">
-                <option value="lease">对外租赁运营</option>
-                <option value="saving">自用降本替代</option>
-              </select>
-            </label>
-          </div>
-        </section>
-
-        <section id="design" class="section-band">
-          <div class="section-heading">
-            <div>
-              <span class="eyebrow">模块一</span>
-              <h3>GPU 集群组网</h3>
-            </div>
           </div>
 
+          <div class="subsection-heading">
+            <h4>GPU 集群组网</h4>
+          </div>
           <div class="split-grid">
             <div class="panel">
               <h4>集群规模</h4>
@@ -277,12 +248,34 @@
           </div>
         </section>
 
-        <section id="bom" class="section-band">
+        <section id="estimate" class="section-band">
           <div class="section-heading">
             <div>
-              <span class="eyebrow">模块一</span>
-              <h3>BOM 与初始投资</h3>
+              <span class="eyebrow">投资估算</span>
+              <h3>CAPEX 与 OPEX</h3>
             </div>
+          </div>
+          <div class="result-grid">
+            <article>
+              <span>硬件 BOM 投资</span>
+              <strong id="hardwareCapexMetric">-</strong>
+            </article>
+            <article>
+              <span>软件/服务成本</span>
+              <strong id="serviceCostMetric">-</strong>
+            </article>
+            <article>
+              <span>年度 OPEX</span>
+              <strong id="annualOpexMetric">-</strong>
+            </article>
+            <article>
+              <span>政策补贴后净投资</span>
+              <strong id="netInvestmentMetric">-</strong>
+            </article>
+          </div>
+
+          <div class="subsection-heading">
+            <h4>CAPEX：硬件 BOM 与软件服务</h4>
           </div>
           <div class="table-wrap">
             <table>
@@ -294,12 +287,33 @@
                   <th>数量</th>
                   <th>估算逻辑</th>
                   <th>备注</th>
+                  <th>金额</th>
                 </tr>
               </thead>
               <tbody id="bomBody"></tbody>
             </table>
           </div>
           <div class="cost-options">
+            <label>
+              管理节点数量
+              <input id="managementNodes" type="number" min="0" value="3" />
+            </label>
+            <label>
+              高性能存储 TB
+              <input id="hotStorageTb" type="number" min="0" value="800" />
+            </label>
+            <label>
+              容量/备份存储 TB
+              <input id="coldStorageTb" type="number" min="0" value="1600" />
+            </label>
+            <label>
+              热存储单价 万元/TB
+              <input id="hotStoragePrice" type="number" min="0" step="0.1" value="0.65" />
+            </label>
+            <label>
+              冷存储单价 万元/TB
+              <input id="coldStoragePrice" type="number" min="0" step="0.1" value="0.18" />
+            </label>
             <label>
               软件平台费用 万元
               <input id="softwareCost" type="number" min="0" value="180" />
@@ -317,15 +331,9 @@
               <input id="taxRate" type="number" min="0" step="0.5" value="13" />
             </label>
           </div>
-        </section>
 
-        <section id="opex" class="section-band">
-          <div class="section-heading">
-            <div>
-              <span class="eyebrow">模块二</span>
-              <h3>租赁与运营成本</h3>
-            </div>
-            <span class="module-status">后续细化</span>
+          <div class="subsection-heading">
+            <h4>OPEX：年度运营成本</h4>
           </div>
           <div class="form-grid">
             <label>
@@ -353,26 +361,6 @@
               <input id="networkOpex" type="number" min="0" value="96" />
             </label>
             <label>
-              管理节点数量
-              <input id="managementNodes" type="number" min="0" value="3" />
-            </label>
-            <label>
-              高性能存储 TB
-              <input id="hotStorageTb" type="number" min="0" value="800" />
-            </label>
-            <label>
-              容量/备份存储 TB
-              <input id="coldStorageTb" type="number" min="0" value="1600" />
-            </label>
-            <label>
-              热存储单价 万元/TB
-              <input id="hotStoragePrice" type="number" min="0" step="0.1" value="0.65" />
-            </label>
-            <label>
-              冷存储单价 万元/TB
-              <input id="coldStoragePrice" type="number" min="0" step="0.1" value="0.18" />
-            </label>
-            <label>
               保险及其他 万元/年
               <input id="otherOpex" type="number" min="0" value="48" />
             </label>
@@ -383,40 +371,62 @@
           </div>
         </section>
 
-        <section id="revenue" class="section-band">
+        <section id="commerce" class="section-band">
           <div class="section-heading">
             <div>
-              <span class="eyebrow">模块三</span>
-              <h3>收益评估</h3>
+              <span class="eyebrow">商务设计</span>
+              <h3>补贴、算力券与裸设备租赁</h3>
             </div>
-            <span class="module-status">后续细化</span>
           </div>
           <div class="form-grid">
             <label>
-              每卡小时收入/节省 元
-              <input id="cardHourPrice" type="number" min="0" step="0.1" value="18" />
+              测算周期
+              <select id="years">
+                <option value="3">三年</option>
+                <option value="5">五年</option>
+              </select>
             </label>
             <label>
-              算力出租/利用率 %
-              <input id="utilization" type="number" min="0" max="100" value="58" />
+              收益模式
+              <select id="revenueMode">
+                <option value="lease">裸设备租赁服务</option>
+                <option value="saving">租赁 + 算力券协同</option>
+              </select>
             </label>
             <label>
-              平台增值收入 万元/年
-              <input id="platformIncome" type="number" min="0" value="120" />
+              政策补贴 万元
+              <input id="policySubsidy" type="number" min="0" value="300" />
             </label>
             <label>
-              年度收入增长 %
-              <input id="growthRate" type="number" min="-100" step="0.5" value="8" />
+              年度算力券 万元/年
+              <input id="annualVoucher" type="number" min="0" value="120" />
             </label>
+            <label>
+              单设备月租 万元/月
+              <input id="deviceMonthlyRent" type="number" min="0" step="0.1" value="18" />
+            </label>
+            <label>
+              设备出租率/上架率 %
+              <input id="deviceLeaseRate" type="number" min="0" max="100" value="58" />
+            </label>
+          </div>
+        </section>
+
+        <section id="returns" class="section-band report-band">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">投资收益评估</span>
+              <h3>TCO、ROI 与回收期</h3>
+            </div>
           </div>
           <div class="result-grid">
             <article>
-              <span>单卡年化成本</span>
-              <strong id="annualCardCost">-</strong>
+              <span>裸设备租赁收入</span>
+              <strong id="rentalIncomeMetric">-</strong>
             </article>
             <article>
-              <span>单卡小时成本</span>
-              <strong id="cardHourCost">-</strong>
+              <span>算力券收入/抵扣</span>
+              <strong id="voucherIncomeMetric">-</strong>
             </article>
             <article>
               <span>三/五年净收益</span>
@@ -426,15 +436,26 @@
               <span>ROI</span>
               <strong id="roiMetric">-</strong>
             </article>
+            <article>
+              <span>TCO</span>
+              <strong id="tcoMetric">-</strong>
+            </article>
+            <article>
+              <span>投资回收期</span>
+              <strong id="paybackMetric">-</strong>
+            </article>
+            <article>
+              <span>单卡年化成本</span>
+              <strong id="annualCardCost">-</strong>
+            </article>
+            <article>
+              <span>单卡小时成本</span>
+              <strong id="cardHourCost">-</strong>
+            </article>
           </div>
-        </section>
 
-        <section id="report" class="section-band report-band">
-          <div class="section-heading">
-            <div>
-              <span class="eyebrow">阶段输出</span>
-              <h3>模块一结论预览</h3>
-            </div>
+          <div class="subsection-heading">
+            <h4>四段式结论预览</h4>
           </div>
           <div id="reportPreview" class="report-preview"></div>
         </section>
