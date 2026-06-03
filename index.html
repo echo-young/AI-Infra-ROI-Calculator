@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GPU 集群组网测算工具</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">算</span>
+          <div>
+            <h1>算力中心测算</h1>
+            <p>GPU 组网工作台</p>
+          </div>
+        </div>
+
+        <nav class="nav-list" aria-label="模块导航">
+          <a href="#overview" class="active">模块路线</a>
+          <a href="#project">基础配置</a>
+          <a href="#design">模块一：组网</a>
+          <a href="#bom">模块一：BOM</a>
+          <a href="#opex">模块二：运营</a>
+          <a href="#revenue">模块三：收益</a>
+          <a href="#report">阶段输出</a>
+        </nav>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <span class="eyebrow">模块化 MVP</span>
+            <h2>先把 GPU 集群组网方案测准</h2>
+          </div>
+          <div class="actions">
+            <button class="icon-button" id="resetBtn" title="重置参数" aria-label="重置参数">↺</button>
+            <button class="primary-button" id="printBtn">导出阶段结果</button>
+          </div>
+        </header>
+
+        <section id="overview" class="section-band">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">模块路线</span>
+              <h3>按模块逐步成型</h3>
+            </div>
+          </div>
+          <div class="module-grid" aria-label="模块拆分">
+            <article class="module-card active-module">
+              <span>当前模块</span>
+              <strong>GPU 集群组网与 BOM</strong>
+              <p>按业务场景推荐单集群规模、IB 训练网络、管理面交换机和可复核的 BOM。</p>
+            </article>
+            <article class="module-card">
+              <span>下一模块</span>
+              <strong>IDC 租赁与运营</strong>
+              <p>围绕机柜、电力、PUE、带宽、运维服务形成年度 OPEX 模型。</p>
+            </article>
+            <article class="module-card">
+              <span>后续模块</span>
+              <strong>收益与回收期</strong>
+              <p>区分对外租赁、自用降本、混合经营，再测 ROI、现金流和敏感性。</p>
+            </article>
+            <article class="module-card">
+              <span>阶段产物</span>
+              <strong>报告与参数版本</strong>
+              <p>每个模块完成后生成独立结论，最后再汇总成完整方案。</p>
+            </article>
+          </div>
+          <div class="kpi-grid">
+            <article class="metric-card">
+              <span>Dense FP16 算力</span>
+              <strong id="fp16Metric">-</strong>
+              <small>按 8GPU/台、非稀疏峰值估算</small>
+            </article>
+            <article class="metric-card">
+              <span>推荐单集群规模</span>
+              <strong id="clusterMetric">-</strong>
+              <small>可自动推荐或手动锁定</small>
+            </article>
+            <article class="metric-card">
+              <span>推荐拓扑</span>
+              <strong id="topologyMetric">-</strong>
+              <small>InfiniBand 优先</small>
+            </article>
+            <article class="metric-card">
+              <span>初始投资</span>
+              <strong id="capexMetric">-</strong>
+              <small>组网 BOM 接入后续 TCO</small>
+            </article>
+          </div>
+        </section>
+
+        <section id="project" class="section-band">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">基础配置</span>
+              <h3>项目边界</h3>
+            </div>
+          </div>
+          <div class="form-grid">
+            <label>
+              项目名称
+              <input id="projectName" type="text" value="AI 算力中心一期建设" />
+            </label>
+            <label>
+              建设地点
+              <input id="location" type="text" value="华东区域 IDC" />
+            </label>
+            <label>
+              算力路线
+              <select id="computeRoute">
+                <option value="nvidia">NVIDIA 算力</option>
+                <option value="domestic">国产算力</option>
+                <option value="hybrid">混合算力</option>
+              </select>
+            </label>
+            <label>
+              业务倾向
+              <select id="workload">
+                <option value="training">训练优先</option>
+                <option value="inference">推理优先</option>
+                <option value="mixed">混合负载</option>
+              </select>
+            </label>
+            <label>
+              测算周期
+              <select id="years">
+                <option value="3">三年</option>
+                <option value="5">五年</option>
+              </select>
+            </label>
+            <label>
+              收益模式
+              <select id="revenueMode">
+                <option value="lease">对外租赁运营</option>
+                <option value="saving">自用降本替代</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section id="design" class="section-band">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">模块一</span>
+              <h3>GPU 集群组网</h3>
+            </div>
+          </div>
+
+          <div class="split-grid">
+            <div class="panel">
+              <h4>集群规模</h4>
+              <div class="form-grid compact">
+                <label>
+                  GPU 型号
+                  <select id="gpuModel">
+                    <option value="h100">NVIDIA H100</option>
+                    <option value="h200">NVIDIA H200</option>
+                    <option value="b200">NVIDIA B200</option>
+                    <option value="b300">NVIDIA B300</option>
+                  </select>
+                </label>
+                <label>
+                  单集群规模
+                  <select id="clusterSizingMode">
+                    <option value="auto">按业务约束自动推荐</option>
+                    <option value="manual">手动输入服务器数量</option>
+                  </select>
+                </label>
+                <label>
+                  服务器数量
+                  <input id="serverCount" type="number" min="1" value="16" />
+                </label>
+                <label>
+                  模型规模档位
+                  <select id="modelScale">
+                    <option value="small">70B 以下 / 小规模微调</option>
+                    <option value="medium">70B-200B / 中等训练</option>
+                    <option value="large">200B+ / 大规模预训练</option>
+                  </select>
+                </label>
+                <label>
+                  并发推理规模
+                  <select id="inferenceScale">
+                    <option value="low">低并发</option>
+                    <option value="medium">中并发</option>
+                    <option value="high">高并发</option>
+                  </select>
+                </label>
+                <label>
+                  单服务器单价 万元
+                  <input id="serverUnitPrice" type="number" min="0" step="1" value="260" />
+                </label>
+                <label>
+                  单机功率 kW
+                  <input id="kwPerServer" type="number" min="0" step="0.1" value="8.5" />
+                </label>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h4>组网约束</h4>
+              <div class="form-grid compact">
+                <label>
+                  IB 端口速率
+                  <select id="ibPortSpeed">
+                    <option value="auto">按 GPU 型号推荐</option>
+                    <option value="400">400G</option>
+                    <option value="800">800G</option>
+                  </select>
+                </label>
+                <label>
+                  目标收敛比
+                  <select id="convergenceRatio">
+                    <option value="auto">按业务倾向推荐</option>
+                    <option value="1">1:1</option>
+                    <option value="2">2:1</option>
+                  </select>
+                </label>
+                <label>
+                  扩容预期
+                  <select id="expansionPlan">
+                    <option value="standard">常规扩容</option>
+                    <option value="aggressive">快速扩容</option>
+                    <option value="fixed">规模固定</option>
+                  </select>
+                </label>
+                <label>
+                  成本敏感度
+                  <select id="costSensitivity">
+                    <option value="balanced">均衡</option>
+                    <option value="low">性能优先</option>
+                    <option value="high">成本优先</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="topology-layout">
+            <div class="topology-card" aria-label="逻辑拓扑示意图">
+              <div class="topology-row">
+                <div class="topology-node server-node">
+                  <span>GPU 服务器组</span>
+                  <strong id="topologyServers">-</strong>
+                </div>
+              </div>
+              <div class="topology-link"></div>
+              <div class="topology-row" id="leafNodes"></div>
+              <div class="topology-link spine-link"></div>
+              <div class="topology-row" id="spineNodes"></div>
+              <div class="management-lane">
+                <div class="topology-node management-node">
+                  <span>管理面交换机</span>
+                  <strong id="managementSwitches">-</strong>
+                </div>
+                <div class="management-arrow">连接 GPU 服务器管理口</div>
+              </div>
+            </div>
+            <div class="design-notes">
+              <article>
+                <span>网络参数</span>
+                <strong id="networkSummary">-</strong>
+              </article>
+              <article>
+                <span>管理面需求</span>
+                <strong id="managementSummary">-</strong>
+              </article>
+              <article>
+                <span>设计提示</span>
+                <p id="designGuidance">-</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section id="bom" class="section-band">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">模块一</span>
+              <h3>BOM 与初始投资</h3>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>类别</th>
+                  <th>物料</th>
+                  <th>规格/说明</th>
+                  <th>数量</th>
+                  <th>估算逻辑</th>
+                  <th>备注</th>
+                </tr>
+              </thead>
+              <tbody id="bomBody"></tbody>
+            </table>
+          </div>
+          <div class="cost-options">
+            <label>
+              软件平台费用 万元
+              <input id="softwareCost" type="number" min="0" value="180" />
+            </label>
+            <label>
+              集成实施比例 %
+              <input id="integrationRate" type="number" min="0" step="0.5" value="5" />
+            </label>
+            <label>
+              备品备件比例 %
+              <input id="spareRate" type="number" min="0" step="0.5" value="2" />
+            </label>
+            <label>
+              增值税率 %
+              <input id="taxRate" type="number" min="0" step="0.5" value="13" />
+            </label>
+          </div>
+        </section>
+
+        <section id="opex" class="section-band">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">模块二</span>
+              <h3>租赁与运营成本</h3>
+            </div>
+            <span class="module-status">后续细化</span>
+          </div>
+          <div class="form-grid">
+            <label>
+              机柜数量
+              <input id="rackCount" type="number" min="1" value="12" />
+            </label>
+            <label>
+              单柜月租 万元
+              <input id="rackRent" type="number" min="0" step="0.1" value="1.8" />
+            </label>
+            <label>
+              PUE
+              <input id="pue" type="number" min="1" step="0.01" value="1.35" />
+            </label>
+            <label>
+              电价 元/kWh
+              <input id="powerPrice" type="number" min="0" step="0.01" value="0.82" />
+            </label>
+            <label>
+              平均负载率 %
+              <input id="loadRate" type="number" min="0" max="100" value="65" />
+            </label>
+            <label>
+              专线/带宽 万元/年
+              <input id="networkOpex" type="number" min="0" value="96" />
+            </label>
+            <label>
+              管理节点数量
+              <input id="managementNodes" type="number" min="0" value="3" />
+            </label>
+            <label>
+              高性能存储 TB
+              <input id="hotStorageTb" type="number" min="0" value="800" />
+            </label>
+            <label>
+              容量/备份存储 TB
+              <input id="coldStorageTb" type="number" min="0" value="1600" />
+            </label>
+            <label>
+              热存储单价 万元/TB
+              <input id="hotStoragePrice" type="number" min="0" step="0.1" value="0.65" />
+            </label>
+            <label>
+              冷存储单价 万元/TB
+              <input id="coldStoragePrice" type="number" min="0" step="0.1" value="0.18" />
+            </label>
+            <label>
+              保险及其他 万元/年
+              <input id="otherOpex" type="number" min="0" value="48" />
+            </label>
+            <label>
+              运维人员与服务 万元/年
+              <input id="opsCost" type="number" min="0" value="180" />
+            </label>
+          </div>
+        </section>
+
+        <section id="revenue" class="section-band">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">模块三</span>
+              <h3>收益评估</h3>
+            </div>
+            <span class="module-status">后续细化</span>
+          </div>
+          <div class="form-grid">
+            <label>
+              每卡小时收入/节省 元
+              <input id="cardHourPrice" type="number" min="0" step="0.1" value="18" />
+            </label>
+            <label>
+              算力出租/利用率 %
+              <input id="utilization" type="number" min="0" max="100" value="58" />
+            </label>
+            <label>
+              平台增值收入 万元/年
+              <input id="platformIncome" type="number" min="0" value="120" />
+            </label>
+            <label>
+              年度收入增长 %
+              <input id="growthRate" type="number" min="-100" step="0.5" value="8" />
+            </label>
+          </div>
+          <div class="result-grid">
+            <article>
+              <span>单卡年化成本</span>
+              <strong id="annualCardCost">-</strong>
+            </article>
+            <article>
+              <span>单卡小时成本</span>
+              <strong id="cardHourCost">-</strong>
+            </article>
+            <article>
+              <span>三/五年净收益</span>
+              <strong id="netProfit">-</strong>
+            </article>
+            <article>
+              <span>ROI</span>
+              <strong id="roiMetric">-</strong>
+            </article>
+          </div>
+        </section>
+
+        <section id="report" class="section-band report-band">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">阶段输出</span>
+              <h3>模块一结论预览</h3>
+            </div>
+          </div>
+          <div id="reportPreview" class="report-preview"></div>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
