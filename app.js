@@ -102,9 +102,9 @@ const textMaps = {
     large: "1.6T+ / 万亿级预训练",
   },
   inferenceScale: {
-    low: "300B-800B 单模型低并发",
-    medium: "800B-1.6T 多租户中并发",
-    high: "1.6T+ 万亿级高并发",
+    low: "单模型试点 / 内部业务低并发",
+    medium: "多业务上线 / 多租户中并发",
+    high: "核心生产服务 / 低延迟 SLA",
   },
   expansionPlan: {
     fixed: "规模固定",
