@@ -522,10 +522,11 @@ function render() {
 
   updateInputAvailability(state);
 
+  document.getElementById("nodeSpecMetric").textContent =
+    `${result.gpu.name.replace("NVIDIA ", "")} ${result.servers} 台套`;
   document.getElementById("fp16Metric").textContent = formatPf16(result.denseFp16Tflops);
   document.getElementById("clusterMetric").textContent = `${result.servers} 台`;
   document.getElementById("topologyMetric").textContent = result.topologyType;
-  document.getElementById("capexMetric").textContent = moneyWan(result.capex);
   document.getElementById("hardwareCapexMetric").textContent = moneyWan(result.directHardware);
   document.getElementById("serviceCostMetric").textContent = moneyWan(result.serviceCost);
   document.getElementById("annualOpexMetric").textContent = moneyWan(result.annualOpex);

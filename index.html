@@ -40,51 +40,29 @@
           <div class="section-heading">
             <div>
               <span class="eyebrow">方案规划</span>
-              <h3>项目边界与集群方案</h3>
+              <h3>生态路线与规划方案</h3>
             </div>
           </div>
-          <div class="module-grid" aria-label="模块拆分">
-            <article class="module-card active-module">
-              <span>方案规划</span>
-              <strong>GPU 集群组网</strong>
-              <p>按业务场景推荐单集群规模、IB 训练网络、管理面交换机和硬件 BOM。</p>
-            </article>
-            <article class="module-card">
-              <span>投资估算</span>
-              <strong>CAPEX / OPEX</strong>
-              <p>CAPEX 基于硬件 BOM，OPEX 覆盖机柜、电力、负载、带宽和运维。</p>
-            </article>
-            <article class="module-card">
-              <span>商务设计</span>
-              <strong>补贴与租赁计费</strong>
-              <p>纳入政策补贴、算力券和每设备/月裸设备租赁服务费。</p>
-            </article>
-            <article class="module-card">
-              <span>收益评估</span>
-              <strong>ROI 与回收期</strong>
-              <p>输出净投资、TCO、租赁收入、算力券抵扣、净收益和回收期。</p>
-            </article>
-          </div>
-          <div class="kpi-grid">
+          <div class="kpi-grid" aria-label="方案规划看板">
             <article class="metric-card">
-              <span>Dense FP16 算力</span>
+              <span>算力节点规格及总台套数</span>
+              <strong id="nodeSpecMetric">-</strong>
+              <small>按 8GPU/台服务器模组统计</small>
+            </article>
+            <article class="metric-card">
+              <span>总算力规模</span>
               <strong id="fp16Metric">-</strong>
               <small>按 8GPU/台、非稀疏峰值估算</small>
             </article>
             <article class="metric-card">
-              <span>推荐单集群规模</span>
+              <span>单集群规模</span>
               <strong id="clusterMetric">-</strong>
               <small>可自动推荐或手动锁定</small>
             </article>
             <article class="metric-card">
-              <span>推荐拓扑</span>
+              <span>组网方案</span>
               <strong id="topologyMetric">-</strong>
               <small>InfiniBand 优先</small>
-            </article>
-            <article class="metric-card">
-              <span>CAPEX</span>
-              <strong id="capexMetric">-</strong>
-              <small>硬件 BOM + 软件服务 + 税费</small>
             </article>
           </div>
 
