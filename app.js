@@ -8,7 +8,7 @@ const gpuCatalog = {
     defaultIbSpeed: 400,
     ibPortsPerServer: 8,
     serverPriceWan: 260,
-    kwPerServer: 8.5,
+    kwPerServer: 10,
     fabricHint: "H100 训练集群建议优先使用 400G NDR InfiniBand。",
   },
   h200: {
@@ -17,7 +17,7 @@ const gpuCatalog = {
     defaultIbSpeed: 400,
     ibPortsPerServer: 8,
     serverPriceWan: 300,
-    kwPerServer: 9.2,
+    kwPerServer: 11,
     fabricHint: "H200 通常延续 H100 级训练网络口径，重点关注显存容量与数据集吞吐。",
   },
   b200: {
@@ -26,7 +26,7 @@ const gpuCatalog = {
     defaultIbSpeed: 800,
     ibPortsPerServer: 8,
     serverPriceWan: 420,
-    kwPerServer: 14,
+    kwPerServer: 16,
     fabricHint: "B200 建议优先规划 800G IB 上联和更高机柜功率余量。",
   },
   b300: {
@@ -35,7 +35,7 @@ const gpuCatalog = {
     defaultIbSpeed: 800,
     ibPortsPerServer: 8,
     serverPriceWan: 520,
-    kwPerServer: 18,
+    kwPerServer: 20,
     fabricHint: "B300 第一版按高密 8GPU 模组估算，建议把供电、散热和扩容作为强约束。",
   },
 };
@@ -53,7 +53,7 @@ const defaults = {
   modelScale: "medium",
   inferenceScale: "medium",
   serverUnitPrice: 260,
-  kwPerServer: 8.5,
+  kwPerServer: 10,
   ibPortSpeed: "auto",
   convergenceRatio: "auto",
   expansionPlan: "standard",
