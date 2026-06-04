@@ -122,21 +122,23 @@
                   服务器数量
                   <input id="serverCount" type="number" min="1" value="16" />
                 </label>
-                <label>
+                <label id="modelScaleField">
                   模型规模档位
                   <select id="modelScale">
                     <option value="small">300B-800B / 大模型推理与轻量训练</option>
                     <option value="medium">800B-1.6T / 旗舰模型中等训练</option>
                     <option value="large">1.6T+ / 万亿级预训练</option>
                   </select>
+                  <span class="field-hint" id="modelScaleHint"></span>
                 </label>
-                <label>
+                <label id="inferenceScaleField">
                   推理服务规模
                   <select id="inferenceScale">
                     <option value="low">单模型试点 / 内部业务低并发</option>
                     <option value="medium">多业务上线 / 多租户中并发</option>
                     <option value="high">核心生产服务 / 低延迟 SLA</option>
                   </select>
+                  <span class="field-hint" id="inferenceScaleHint"></span>
                 </label>
                 <label>
                   单服务器单价 万元

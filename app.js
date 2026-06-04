@@ -453,9 +453,19 @@ function updateTopology(state, result) {
 
   const sizingText =
     state.clusterSizingMode === "auto"
-      ? `系统按 ${textMaps.workload[state.workload]}、${textMaps.modelScale[state.modelScale]}、${textMaps.inferenceScale[state.inferenceScale]} 推荐 ${result.recommendedServers} 台服务器。`
+      ? `系统按 ${textMaps.workload[state.workload]}、${getActiveSizingText(state)} 推荐 ${result.recommendedServers} 台服务器。`
       : `当前采用手动规模 ${result.servers} 台服务器。`;
   document.getElementById("designGuidance").textContent = `${sizingText} ${result.gpu.fabricHint} 管理面按独立以太网估算，不纳入 IB Fabric。`;
+}
+
+function getActiveSizingText(state) {
+  if (state.workload === "training") {
+    return `模型规模 ${textMaps.modelScale[state.modelScale]}`;
+  }
+  if (state.workload === "inference") {
+    return `推理服务规模 ${textMaps.inferenceScale[state.inferenceScale]}`;
+  }
+  return `模型规模 ${textMaps.modelScale[state.modelScale]} 与推理服务规模 ${textMaps.inferenceScale[state.inferenceScale]}`;
 }
 
 function updateBom(bom) {
@@ -513,6 +523,24 @@ function updateInputAvailability(state) {
   const serverInput = document.getElementById("serverCount");
   serverInput.disabled = state.clusterSizingMode === "auto";
   serverInput.title = state.clusterSizingMode === "auto" ? "自动推荐模式下由业务约束决定" : "手动输入服务器数量";
+
+  const modelScale = document.getElementById("modelScale");
+  const inferenceScale = document.getElementById("inferenceScale");
+  const modelScaleField = document.getElementById("modelScaleField");
+  const inferenceScaleField = document.getElementById("inferenceScaleField");
+  const modelScaleHint = document.getElementById("modelScaleHint");
+  const inferenceScaleHint = document.getElementById("inferenceScaleHint");
+  const modelDisabled = state.workload === "inference";
+  const inferenceDisabled = state.workload === "training";
+
+  modelScale.disabled = modelDisabled;
+  inferenceScale.disabled = inferenceDisabled;
+  modelScaleField.classList.toggle("is-muted", modelDisabled);
+  inferenceScaleField.classList.toggle("is-muted", inferenceDisabled);
+  modelScale.title = modelDisabled ? "推理优先时不参与自动推荐数量计算" : "用于训练或混合负载的规模推荐";
+  inferenceScale.title = inferenceDisabled ? "训练优先时不参与自动推荐数量计算" : "用于推理或混合负载的规模推荐";
+  modelScaleHint.textContent = modelDisabled ? "推理优先时不参与服务器数量推荐" : "参与训练/混合负载推荐";
+  inferenceScaleHint.textContent = inferenceDisabled ? "训练优先时不参与服务器数量推荐" : "参与推理/混合负载推荐";
 }
 
 function render() {

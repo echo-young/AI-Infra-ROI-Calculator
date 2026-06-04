@@ -270,6 +270,18 @@ label {
   font-weight: 700;
 }
 
+label.is-muted {
+  opacity: 0.58;
+}
+
+.field-hint {
+  min-height: 16px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
 input,
 select {
   width: 100%;
