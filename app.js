@@ -428,26 +428,19 @@ function calculate(state) {
   };
 }
 
-function renderSwitchNodes(count, labelPrefix) {
-  if (count === 0) {
-    return '<div class="topology-node muted-node"><span>IB Spine</span><strong>单层无需 Spine</strong></div>';
-  }
-
-  const visible = Math.min(count, 4);
-  const nodes = Array.from({ length: visible }, (_, index) => `
-    <div class="topology-node switch-node">
-      <span>${labelPrefix} ${index + 1}</span>
-      <strong>${index === visible - 1 && count > visible ? `+${count - visible}` : "交换机"}</strong>
-    </div>
-  `).join("");
-  return nodes;
-}
-
 function updateTopology(state, result) {
   document.getElementById("topologyServers").textContent = `${result.servers} 台 8GPU 模组`;
-  document.getElementById("leafNodes").innerHTML = renderSwitchNodes(result.leafCount, "IB Leaf");
-  document.getElementById("spineNodes").innerHTML = renderSwitchNodes(result.spineCount, "IB Spine");
+  document.getElementById("topologyGpuSummary").textContent =
+    `${result.gpu.name.replace("NVIDIA ", "")} / ${result.totalCards} 张 GPU`;
+  document.getElementById("topologyIbSpeed").textContent = `${result.ibSpeed}G IB`;
+  document.getElementById("topologyFabric").textContent = `${result.topologyType} / ${result.ratio}:1`;
+  document.getElementById("topologySwitchSummary").textContent =
+    result.spineCount > 0
+      ? `Leaf ${result.leafCount} 台 + Spine ${result.spineCount} 台`
+      : `Leaf ${result.leafCount} 台，单层组网`;
   document.getElementById("managementSwitches").textContent = `${result.managementSwitches} 台`;
+  document.getElementById("managementPortsSummary").textContent =
+    `约 ${result.servers} 个管理口，48 口交换机估算`;
   document.getElementById("networkSummary").textContent = `${result.topologyType} / ${result.ibSpeed}G IB / ${result.ratio}:1 收敛`;
   document.getElementById("managementSummary").textContent = `独立管理面，约 ${result.managementSwitches} 台 48 口管理交换机`;
 

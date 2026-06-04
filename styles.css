@@ -328,24 +328,24 @@ select:focus {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fbfcfb;
-  padding: 18px;
-  min-height: 360px;
+  padding: 22px;
+  min-height: 320px;
 }
 
-.topology-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+.topology-visual {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
   gap: 12px;
 }
 
 .topology-node {
-  min-width: 150px;
+  width: min(100%, 420px);
   border: 1px solid #bfd0c6;
   border-radius: 8px;
-  padding: 12px;
-  text-align: center;
+  padding: 16px 18px;
   background: #ffffff;
+  text-align: left;
 }
 
 .topology-node span {
@@ -358,7 +358,15 @@ select:focus {
   display: block;
   margin-top: 5px;
   color: var(--accent-dark);
-  font-size: 15px;
+  font-size: 20px;
+}
+
+.topology-node small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .server-node {
@@ -366,7 +374,7 @@ select:focus {
   background: #fff8e8;
 }
 
-.switch-node {
+.fabric-node {
   border-color: rgba(15, 118, 110, 0.42);
   background: #ecf7f4;
 }
@@ -376,35 +384,38 @@ select:focus {
   background: #eef3f5;
 }
 
-.muted-node {
-  border-style: dashed;
-  color: var(--muted);
-}
-
-.topology-link {
-  width: 2px;
-  height: 34px;
-  margin: 6px auto;
-  background: linear-gradient(var(--accent), transparent);
-}
-
-.spine-link {
-  background: linear-gradient(var(--accent), #d7a13d);
-}
-
-.management-lane {
+.topology-flow {
+  position: relative;
+  min-height: 38px;
   display: grid;
-  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
-  align-items: center;
-  gap: 14px;
-  margin-top: 24px;
-  padding-top: 18px;
-  border-top: 1px dashed var(--line);
+  place-items: center;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
 }
 
-.management-arrow {
-  color: var(--muted);
-  font-size: 13px;
+.topology-flow::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: linear-gradient(var(--accent), rgba(15, 118, 110, 0.16));
+}
+
+.topology-flow span {
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fbfcfb;
+  padding: 4px 10px;
+}
+
+.management-flow::before {
+  background: linear-gradient(rgba(15, 118, 110, 0.2), #c8d4d8);
 }
 
 .design-notes {
@@ -533,8 +544,7 @@ tbody tr:last-child td {
   .form-grid.compact,
   .cost-options,
   .split-grid,
-  .topology-layout,
-  .management-lane {
+  .topology-layout {
     grid-template-columns: 1fr;
   }
 

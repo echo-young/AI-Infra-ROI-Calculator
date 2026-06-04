@@ -192,22 +192,28 @@
 
           <div class="topology-layout">
             <div class="topology-card" aria-label="逻辑拓扑示意图">
-              <div class="topology-row">
-                <div class="topology-node server-node">
+              <div class="topology-visual">
+                <section class="topology-node server-node">
                   <span>GPU 服务器组</span>
                   <strong id="topologyServers">-</strong>
+                  <small id="topologyGpuSummary">-</small>
+                </section>
+                <div class="topology-flow">
+                  <span id="topologyIbSpeed">-</span>
                 </div>
-              </div>
-              <div class="topology-link"></div>
-              <div class="topology-row" id="leafNodes"></div>
-              <div class="topology-link spine-link"></div>
-              <div class="topology-row" id="spineNodes"></div>
-              <div class="management-lane">
-                <div class="topology-node management-node">
-                  <span>管理面交换机</span>
+                <section class="topology-node fabric-node">
+                  <span>IB Fabric</span>
+                  <strong id="topologyFabric">-</strong>
+                  <small id="topologySwitchSummary">-</small>
+                </section>
+                <div class="topology-flow management-flow">
+                  <span>独立管理面</span>
+                </div>
+                <section class="topology-node management-node">
+                  <span>管理交换机</span>
                   <strong id="managementSwitches">-</strong>
-                </div>
-                <div class="management-arrow">连接 GPU 服务器管理口</div>
+                  <small id="managementPortsSummary">连接 GPU 服务器管理口</small>
+                </section>
               </div>
             </div>
             <div class="design-notes">
