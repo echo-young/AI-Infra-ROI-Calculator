@@ -97,14 +97,14 @@ const textMaps = {
     saving: "租赁 + 算力券协同",
   },
   modelScale: {
-    small: "70B 以下 / 小规模微调",
-    medium: "70B-200B / 中等训练",
-    large: "200B+ / 大规模预训练",
+    small: "300B-800B / 大模型推理与轻量训练",
+    medium: "800B-1.6T / 旗舰模型中等训练",
+    large: "1.6T+ / 万亿级预训练",
   },
   inferenceScale: {
-    low: "低并发",
-    medium: "中并发",
-    high: "高并发",
+    low: "300B-800B 单模型低并发",
+    medium: "800B-1.6T 多租户中并发",
+    high: "1.6T+ 万亿级高并发",
   },
   expansionPlan: {
     fixed: "规模固定",
@@ -191,8 +191,8 @@ function buildState() {
 }
 
 function recommendServerCount(state) {
-  const trainingMap = { small: 8, medium: 32, large: 96 };
-  const inferenceMap = { low: 4, medium: 16, high: 48 };
+  const trainingMap = { small: 32, medium: 128, large: 256 };
+  const inferenceMap = { low: 16, medium: 64, high: 128 };
   let base;
 
   if (state.workload === "training") {
@@ -208,8 +208,11 @@ function recommendServerCount(state) {
   if (state.costSensitivity === "high") base *= 0.75;
   if (state.costSensitivity === "low") base *= 1.25;
 
+  const singleClusterCap = state.workload === "inference" ? 128 : 256;
+  base = Math.min(base, singleClusterCap);
+
   const rounded = Math.max(2, Math.ceil(base / 2) * 2);
-  return Math.min(256, rounded);
+  return rounded;
 }
 
 function getDesignInputs(state) {

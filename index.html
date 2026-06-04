@@ -27,8 +27,7 @@
       <section class="workspace">
         <header class="topbar">
           <div>
-            <span class="eyebrow">四段式测算</span>
-            <h2>按方案、投资、商务、收益完成智算投资规划</h2>
+            <h2>基于建设方案评估投资收益率</h2>
           </div>
           <div class="actions">
             <button class="icon-button" id="resetBtn" title="重置参数" aria-label="重置参数">↺</button>
@@ -126,17 +125,17 @@
                 <label>
                   模型规模档位
                   <select id="modelScale">
-                    <option value="small">70B 以下 / 小规模微调</option>
-                    <option value="medium">70B-200B / 中等训练</option>
-                    <option value="large">200B+ / 大规模预训练</option>
+                    <option value="small">300B-800B / 大模型推理与轻量训练</option>
+                    <option value="medium">800B-1.6T / 旗舰模型中等训练</option>
+                    <option value="large">1.6T+ / 万亿级预训练</option>
                   </select>
                 </label>
                 <label>
                   并发推理规模
                   <select id="inferenceScale">
-                    <option value="low">低并发</option>
-                    <option value="medium">中并发</option>
-                    <option value="high">高并发</option>
+                    <option value="low">300B-800B 单模型低并发</option>
+                    <option value="medium">800B-1.6T 多租户中并发</option>
+                    <option value="high">1.6T+ 万亿级高并发</option>
                   </select>
                 </label>
                 <label>
