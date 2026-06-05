@@ -75,10 +75,29 @@ const defaults = {
   networkOpex: 96,
   opsCost: 180,
   otherOpex: 48,
-  policySubsidy: 300,
-  annualVoucher: 120,
   deviceMonthlyRent: 18,
   deviceLeaseRate: 58,
+  constructionSubsidy: 300,
+  constructionSubsidyRate: 80,
+  constructionSubsidyYear: 1,
+  equipmentSubsidy: 0,
+  equipmentSubsidyRate: 70,
+  equipmentSubsidyYear: 1,
+  annualVoucher: 120,
+  voucherRedeemRate: 75,
+  voucherStartYear: 1,
+  powerDiscount: 0,
+  powerDiscountRate: 80,
+  powerDiscountStartYear: 1,
+  rackSubsidy: 0,
+  rackSubsidyRate: 80,
+  rackSubsidyStartYear: 1,
+  loanInterestSubsidy: 0,
+  loanInterestSubsidyRate: 70,
+  loanInterestSubsidyStartYear: 1,
+  taxIncentive: 0,
+  taxIncentiveRate: 70,
+  taxIncentiveStartYear: 1,
 };
 
 const textMaps = {
@@ -183,10 +202,29 @@ function buildState() {
     networkOpex: numberValue("networkOpex"),
     opsCost: numberValue("opsCost"),
     otherOpex: numberValue("otherOpex"),
-    policySubsidy: numberValue("policySubsidy"),
-    annualVoucher: numberValue("annualVoucher"),
     deviceMonthlyRent: numberValue("deviceMonthlyRent"),
     deviceLeaseRate: numberValue("deviceLeaseRate") / 100,
+    constructionSubsidy: numberValue("constructionSubsidy"),
+    constructionSubsidyRate: numberValue("constructionSubsidyRate") / 100,
+    constructionSubsidyYear: numberValue("constructionSubsidyYear"),
+    equipmentSubsidy: numberValue("equipmentSubsidy"),
+    equipmentSubsidyRate: numberValue("equipmentSubsidyRate") / 100,
+    equipmentSubsidyYear: numberValue("equipmentSubsidyYear"),
+    annualVoucher: numberValue("annualVoucher"),
+    voucherRedeemRate: numberValue("voucherRedeemRate") / 100,
+    voucherStartYear: numberValue("voucherStartYear"),
+    powerDiscount: numberValue("powerDiscount"),
+    powerDiscountRate: numberValue("powerDiscountRate") / 100,
+    powerDiscountStartYear: numberValue("powerDiscountStartYear"),
+    rackSubsidy: numberValue("rackSubsidy"),
+    rackSubsidyRate: numberValue("rackSubsidyRate") / 100,
+    rackSubsidyStartYear: numberValue("rackSubsidyStartYear"),
+    loanInterestSubsidy: numberValue("loanInterestSubsidy"),
+    loanInterestSubsidyRate: numberValue("loanInterestSubsidyRate") / 100,
+    loanInterestSubsidyStartYear: numberValue("loanInterestSubsidyStartYear"),
+    taxIncentive: numberValue("taxIncentive"),
+    taxIncentiveRate: numberValue("taxIncentiveRate") / 100,
+    taxIncentiveStartYear: numberValue("taxIncentiveStartYear"),
   };
 }
 
@@ -322,6 +360,82 @@ function calculateFabric(state) {
   };
 }
 
+function oneTimePolicy(amount, redeemRate, redeemYear, years) {
+  const nominal = amount;
+  const isInPeriod = redeemYear >= 1 && redeemYear <= years;
+  const adjusted = isInPeriod ? nominal * redeemRate : 0;
+  return {
+    nominal,
+    adjusted,
+    gap: isInPeriod ? nominal - adjusted : nominal,
+  };
+}
+
+function annualPolicy(amount, redeemRate, startYear, years) {
+  const activeYears = startYear >= 1 && startYear <= years ? years - startYear + 1 : 0;
+  const nominal = amount * activeYears;
+  const adjusted = nominal * redeemRate;
+  return {
+    annualNominal: amount,
+    activeYears,
+    nominal,
+    adjusted,
+    gap: nominal - adjusted,
+    averageAnnualAdjusted: years > 0 ? adjusted / years : 0,
+  };
+}
+
+function calculatePolicyCashflow(state) {
+  const construction = oneTimePolicy(
+    state.constructionSubsidy,
+    state.constructionSubsidyRate,
+    state.constructionSubsidyYear,
+    state.years,
+  );
+  const equipment = oneTimePolicy(
+    state.equipmentSubsidy,
+    state.equipmentSubsidyRate,
+    state.equipmentSubsidyYear,
+    state.years,
+  );
+  const voucher =
+    state.revenueMode === "saving"
+      ? annualPolicy(state.annualVoucher, state.voucherRedeemRate, state.voucherStartYear, state.years)
+      : annualPolicy(0, state.voucherRedeemRate, state.voucherStartYear, state.years);
+  const power = annualPolicy(state.powerDiscount, state.powerDiscountRate, state.powerDiscountStartYear, state.years);
+  const rack = annualPolicy(state.rackSubsidy, state.rackSubsidyRate, state.rackSubsidyStartYear, state.years);
+  const loan = annualPolicy(
+    state.loanInterestSubsidy,
+    state.loanInterestSubsidyRate,
+    state.loanInterestSubsidyStartYear,
+    state.years,
+  );
+  const tax = annualPolicy(state.taxIncentive, state.taxIncentiveRate, state.taxIncentiveStartYear, state.years);
+
+  const oneTimePolicies = [construction, equipment];
+  const annualPolicies = [voucher, power, rack, loan, tax];
+  const oneTimeAdjusted = oneTimePolicies.reduce((sum, policy) => sum + policy.adjusted, 0);
+  const annualAdjusted = annualPolicies.reduce((sum, policy) => sum + policy.adjusted, 0);
+  const nominal = [...oneTimePolicies, ...annualPolicies].reduce((sum, policy) => sum + policy.nominal, 0);
+  const adjusted = oneTimeAdjusted + annualAdjusted;
+
+  return {
+    construction,
+    equipment,
+    voucher,
+    power,
+    rack,
+    loan,
+    tax,
+    oneTimeAdjusted,
+    annualAdjusted,
+    averageAnnualAdjusted: state.years > 0 ? annualAdjusted / state.years : 0,
+    nominal,
+    adjusted,
+    gap: Math.max(0, nominal - adjusted),
+  };
+}
+
 function calculate(state) {
   const fabric = calculateFabric(state);
   const computeCost = fabric.bom[0].amount;
@@ -341,24 +455,27 @@ function calculate(state) {
   const annualOpex = annualPowerCost + annualRackCost + state.networkOpex + state.opsCost + state.otherOpex;
   const totalOpex = annualOpex * state.years;
   const serviceCost = state.softwareCost + integrationCost + spareCost;
-  const netInvestment = Math.max(0, capex - state.policySubsidy);
+  const policy = calculatePolicyCashflow(state);
+  const netInvestment = Math.max(0, capex - policy.oneTimeAdjusted);
   const tco = netInvestment + totalOpex;
 
   const annualRentalIncome = fabric.servers * state.deviceMonthlyRent * 12 * state.deviceLeaseRate;
-  const annualVoucherIncome = state.annualVoucher;
+  const annualVoucherIncome = state.revenueMode === "saving" ? policy.voucher.averageAnnualAdjusted : 0;
   const cumulativeRentalIncome = annualRentalIncome * state.years;
-  const cumulativeVoucherIncome = annualVoucherIncome * state.years;
-  const cumulativeIncome = cumulativeRentalIncome + cumulativeVoucherIncome;
+  const cumulativeVoucherIncome = state.revenueMode === "saving" ? policy.voucher.adjusted : 0;
+  const cumulativeVoucherDiscount = state.revenueMode === "saving" ? policy.voucher.nominal : 0;
+  const cumulativeIncome = cumulativeRentalIncome + policy.annualAdjusted;
 
-  const annualAverageIncome = annualRentalIncome + annualVoucherIncome;
+  const annualAverageIncome = annualRentalIncome + policy.averageAnnualAdjusted;
   const annualNetCash = annualAverageIncome - annualOpex;
   const payback = annualNetCash > 0 ? netInvestment / annualNetCash : Infinity;
   const netProfit = cumulativeIncome - tco;
   const roi = tco > 0 ? netProfit / tco : 0;
-  const annualCardCost = fabric.totalCards > 0 ? tco / state.years / fabric.totalCards : 0;
+  const effectiveTco = Math.max(0, tco - policy.annualAdjusted);
+  const annualCardCost = fabric.totalCards > 0 ? effectiveTco / state.years / fabric.totalCards : 0;
   const cardHourCost =
     fabric.totalCards > 0 && state.deviceLeaseRate > 0
-      ? (tco * 10000) / (fabric.totalCards * 24 * 365 * state.years * state.deviceLeaseRate)
+      ? (effectiveTco * 10000) / (fabric.totalCards * 24 * 365 * state.years * state.deviceLeaseRate)
       : 0;
 
   const bom = [
@@ -414,14 +531,19 @@ function calculate(state) {
     annualOpex,
     totalOpex,
     tco,
+    effectiveTco,
     annualRentalIncome,
     annualVoucherIncome,
     cumulativeRentalIncome,
     cumulativeVoucherIncome,
+    cumulativeVoucherDiscount,
     cumulativeIncome,
+    annualAverageIncome,
+    annualNetCash,
     payback,
     netProfit,
     roi,
+    policy,
     annualCardCost,
     cardHourCost,
     bom,
@@ -496,12 +618,12 @@ function updateReport(state, result) {
       <p>硬件 BOM 投资约 ${moneyWan(result.directHardware)}，软件/服务成本约 ${moneyWan(result.serviceCost)}，含税初始 CAPEX 约 ${moneyWan(result.capex)}；年度 OPEX 约 ${moneyWan(result.annualOpex)}，主要由机柜、电力、负载、带宽、运维和保险构成。</p>
     </article>
     <article>
-      <h4>3. 商务设计</h4>
-      <p>商务模式为${textMaps.revenueMode[state.revenueMode]}，政策补贴按一次性 ${moneyWan(state.policySubsidy)} 抵减 CAPEX，年度算力券按 ${moneyWan(state.annualVoucher)} 单独列示；裸设备租赁按每设备/月 ${moneyWan(state.deviceMonthlyRent)}、出租率/上架率 ${(state.deviceLeaseRate * 100).toFixed(1)}% 测算。</p>
+      <h4>3. 政策与商务变量</h4>
+      <p>商务模式为${textMaps.revenueMode[state.revenueMode]}，裸设备租赁按每设备/月 ${moneyWan(state.deviceMonthlyRent)}、出租率/上架率 ${(state.deviceLeaseRate * 100).toFixed(1)}% 测算；政策名义金额约 ${moneyWan(result.policy.nominal)}，按兑现比例与兑现年度折算后约 ${moneyWan(result.policy.adjusted)}，兑现缺口约 ${moneyWan(result.policy.gap)}。</p>
     </article>
     <article>
       <h4>4. 投资收益评估</h4>
-      <p>政策补贴后净投资约 ${moneyWan(result.netInvestment)}，${state.years} 年 TCO 约 ${moneyWan(result.tco)}，累计裸设备租赁收入约 ${moneyWan(result.cumulativeRentalIncome)}，累计算力券收入/抵扣约 ${moneyWan(result.cumulativeVoucherIncome)}，净收益约 ${moneyWan(result.netProfit)}，ROI 为 ${percent(result.roi * 100)}，投资回收期为 ${paybackText}。</p>
+      <p>一次性政策兑现后净投资约 ${moneyWan(result.netInvestment)}，${state.years} 年 TCO 约 ${moneyWan(result.tco)}，累计裸设备租赁收入约 ${moneyWan(result.cumulativeRentalIncome)}；算力券客户抵扣约 ${moneyWan(result.cumulativeVoucherDiscount)}，平台兑现约 ${moneyWan(result.cumulativeVoucherIncome)}。风险调整后净收益约 ${moneyWan(result.netProfit)}，ROI 为 ${percent(result.roi * 100)}，投资回收期为 ${paybackText}。</p>
     </article>
   `;
 }
@@ -534,6 +656,12 @@ function updateInputAvailability(state) {
   inferenceScale.title = inferenceDisabled ? "训练优先时不参与自动推荐数量计算" : "用于推理或混合负载的规模推荐";
   modelScaleHint.textContent = modelDisabled ? "推理优先时不参与服务器数量推荐" : "参与训练/混合负载推荐";
   inferenceScaleHint.textContent = inferenceDisabled ? "训练优先时不参与服务器数量推荐" : "参与推理/混合负载推荐";
+
+  ["annualVoucher", "voucherRedeemRate", "voucherStartYear"].forEach((id) => {
+    const input = document.getElementById(id);
+    input.disabled = state.revenueMode !== "saving";
+    input.title = state.revenueMode === "saving" ? "租赁 + 算力券协同模式下参与现金流" : "裸设备租赁模式下不参与现金流";
+  });
 }
 
 function render() {
@@ -556,7 +684,11 @@ function render() {
   document.getElementById("annualOpexMetric").textContent = moneyWan(result.annualOpex);
   document.getElementById("netInvestmentMetric").textContent = moneyWan(result.netInvestment);
   document.getElementById("rentalIncomeMetric").textContent = moneyWan(result.cumulativeRentalIncome);
-  document.getElementById("voucherIncomeMetric").textContent = moneyWan(result.cumulativeVoucherIncome);
+  document.getElementById("voucherIncomeMetric").textContent = moneyWan(result.cumulativeVoucherDiscount);
+  document.getElementById("voucherRedeemedMetric").textContent = moneyWan(result.cumulativeVoucherIncome);
+  document.getElementById("policyNominalMetric").textContent = moneyWan(result.policy.nominal);
+  document.getElementById("policyAdjustedMetric").textContent = moneyWan(result.policy.adjusted);
+  document.getElementById("policyGapMetric").textContent = moneyWan(result.policy.gap);
   document.getElementById("tcoMetric").textContent = moneyWan(result.tco);
   document.getElementById("paybackMetric").textContent = Number.isFinite(result.payback)
     ? `${result.payback.toFixed(1)} 年`

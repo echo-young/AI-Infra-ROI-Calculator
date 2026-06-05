@@ -19,7 +19,7 @@
         <nav class="nav-list" aria-label="模块导航">
           <a href="#overview" class="active">方案规划</a>
           <a href="#estimate">投资估算</a>
-          <a href="#commerce">商务设计</a>
+          <a href="#commerce">政策与商务变量</a>
           <a href="#returns">投资收益评估</a>
         </nav>
       </aside>
@@ -254,7 +254,7 @@
               <strong id="annualOpexMetric">-</strong>
             </article>
             <article>
-              <span>政策补贴后净投资</span>
+              <span>一次性政策后净投资</span>
               <strong id="netInvestmentMetric">-</strong>
             </article>
           </div>
@@ -359,8 +359,8 @@
         <section id="commerce" class="section-band">
           <div class="section-heading">
             <div>
-              <span class="eyebrow">商务设计</span>
-              <h3>补贴、算力券与裸设备租赁</h3>
+              <span class="eyebrow">政策与商务变量</span>
+              <h3>风险调整现金流</h3>
             </div>
           </div>
           <div class="form-grid">
@@ -379,14 +379,6 @@
               </select>
             </label>
             <label>
-              政策补贴 万元
-              <input id="policySubsidy" type="number" min="0" value="300" />
-            </label>
-            <label>
-              年度算力券 万元/年
-              <input id="annualVoucher" type="number" min="0" value="120" />
-            </label>
-            <label>
               单设备月租 万元/月
               <input id="deviceMonthlyRent" type="number" min="0" step="0.1" value="18" />
             </label>
@@ -394,6 +386,54 @@
               设备出租率/上架率 %
               <input id="deviceLeaseRate" type="number" min="0" max="100" value="58" />
             </label>
+          </div>
+
+          <div class="subsection-heading">
+            <h4>一次性政策补贴</h4>
+          </div>
+          <div class="policy-grid">
+            <div class="policy-grid-head">政策项</div>
+            <div class="policy-grid-head">名义金额 万元</div>
+            <div class="policy-grid-head">兑现比例 %</div>
+            <div class="policy-grid-head">兑现年度</div>
+            <div>一次性建设补贴</div>
+            <input id="constructionSubsidy" type="number" min="0" value="300" />
+            <input id="constructionSubsidyRate" type="number" min="0" max="100" value="80" />
+            <input id="constructionSubsidyYear" type="number" min="1" value="1" />
+            <div>设备购置补贴</div>
+            <input id="equipmentSubsidy" type="number" min="0" value="0" />
+            <input id="equipmentSubsidyRate" type="number" min="0" max="100" value="70" />
+            <input id="equipmentSubsidyYear" type="number" min="1" value="1" />
+          </div>
+
+          <div class="subsection-heading">
+            <h4>年度政策收益与抵扣</h4>
+          </div>
+          <div class="policy-grid">
+            <div class="policy-grid-head">政策项</div>
+            <div class="policy-grid-head">年度名义金额 万元/年</div>
+            <div class="policy-grid-head">兑现比例 %</div>
+            <div class="policy-grid-head">起始年度</div>
+            <div>年度算力券</div>
+            <input id="annualVoucher" type="number" min="0" value="120" />
+            <input id="voucherRedeemRate" type="number" min="0" max="100" value="75" />
+            <input id="voucherStartYear" type="number" min="1" value="1" />
+            <div>电价优惠</div>
+            <input id="powerDiscount" type="number" min="0" value="0" />
+            <input id="powerDiscountRate" type="number" min="0" max="100" value="80" />
+            <input id="powerDiscountStartYear" type="number" min="1" value="1" />
+            <div>机柜/场地补贴</div>
+            <input id="rackSubsidy" type="number" min="0" value="0" />
+            <input id="rackSubsidyRate" type="number" min="0" max="100" value="80" />
+            <input id="rackSubsidyStartYear" type="number" min="1" value="1" />
+            <div>贷款贴息</div>
+            <input id="loanInterestSubsidy" type="number" min="0" value="0" />
+            <input id="loanInterestSubsidyRate" type="number" min="0" max="100" value="70" />
+            <input id="loanInterestSubsidyStartYear" type="number" min="1" value="1" />
+            <div>税收优惠</div>
+            <input id="taxIncentive" type="number" min="0" value="0" />
+            <input id="taxIncentiveRate" type="number" min="0" max="100" value="70" />
+            <input id="taxIncentiveStartYear" type="number" min="1" value="1" />
           </div>
         </section>
 
@@ -410,8 +450,24 @@
               <strong id="rentalIncomeMetric">-</strong>
             </article>
             <article>
-              <span>算力券收入/抵扣</span>
+              <span>算力券客户抵扣额</span>
               <strong id="voucherIncomeMetric">-</strong>
+            </article>
+            <article>
+              <span>算力券平台兑现额</span>
+              <strong id="voucherRedeemedMetric">-</strong>
+            </article>
+            <article>
+              <span>政策名义金额</span>
+              <strong id="policyNominalMetric">-</strong>
+            </article>
+            <article>
+              <span>风险调整后政策收益</span>
+              <strong id="policyAdjustedMetric">-</strong>
+            </article>
+            <article>
+              <span>政策兑现缺口</span>
+              <strong id="policyGapMetric">-</strong>
             </article>
             <article>
               <span>三/五年净收益</span>
