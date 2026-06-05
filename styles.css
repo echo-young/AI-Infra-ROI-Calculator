@@ -258,6 +258,34 @@ select:disabled {
   gap: 14px;
 }
 
+.policy-grid {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.2fr) repeat(3, minmax(120px, 1fr));
+  gap: 10px;
+  align-items: center;
+  overflow-x: auto;
+}
+
+.policy-grid > div,
+.policy-grid > input {
+  min-width: 0;
+}
+
+.policy-grid > div:not(.policy-grid-head) {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.policy-grid-head {
+  border-radius: 8px;
+  background: #eef2ee;
+  color: #405048;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .form-grid.compact {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -543,6 +571,7 @@ tbody tr:last-child td {
   .form-grid,
   .form-grid.compact,
   .cost-options,
+  .policy-grid,
   .split-grid,
   .topology-layout {
     grid-template-columns: 1fr;
