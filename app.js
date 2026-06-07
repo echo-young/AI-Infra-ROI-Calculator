@@ -56,9 +56,14 @@ const defaults = {
   kwPerServer: 10.2,
   ibPortSpeed: "auto",
   convergenceRatio: "auto",
+  leafSwitchPrice: 70,
+  spineSwitchPrice: 80,
+  ibCableUnitPrice: 0.9,
+  managementSwitchPrice: 3.5,
   expansionPlan: "standard",
   costSensitivity: "balanced",
   managementNodes: 3,
+  storageScope: "excluded",
   hotStorageTb: 800,
   coldStorageTb: 1600,
   hotStoragePrice: 0.65,
@@ -66,9 +71,11 @@ const defaults = {
   softwareCost: 180,
   integrationRate: 5,
   spareRate: 2,
-  taxRate: 13,
+  rackBillingMode: "rack",
+  rackPowerKw: 30,
   rackCount: 12,
   rackRent: 1.8,
+  rackPackagePrice: 900,
   pue: 1.35,
   powerPrice: 0.82,
   loadRate: 65,
@@ -86,9 +93,6 @@ const defaults = {
   annualVoucher: 120,
   voucherRedeemRate: 75,
   voucherStartYear: 1,
-  powerDiscount: 0,
-  powerDiscountRate: 80,
-  powerDiscountStartYear: 1,
   rackSubsidy: 0,
   rackSubsidyRate: 80,
   rackSubsidyStartYear: 1,
@@ -183,9 +187,14 @@ function buildState() {
     kwPerServer: numberValue("kwPerServer"),
     ibPortSpeed: textValue("ibPortSpeed"),
     convergenceRatio: textValue("convergenceRatio"),
+    leafSwitchPrice: numberValue("leafSwitchPrice"),
+    spineSwitchPrice: numberValue("spineSwitchPrice"),
+    ibCableUnitPrice: numberValue("ibCableUnitPrice"),
+    managementSwitchPrice: numberValue("managementSwitchPrice"),
     expansionPlan: textValue("expansionPlan"),
     costSensitivity: textValue("costSensitivity"),
     managementNodes: numberValue("managementNodes"),
+    storageScope: textValue("storageScope"),
     hotStorageTb: numberValue("hotStorageTb"),
     coldStorageTb: numberValue("coldStorageTb"),
     hotStoragePrice: numberValue("hotStoragePrice"),
@@ -193,9 +202,11 @@ function buildState() {
     softwareCost: numberValue("softwareCost"),
     integrationRate: numberValue("integrationRate") / 100,
     spareRate: numberValue("spareRate") / 100,
-    taxRate: numberValue("taxRate") / 100,
+    rackBillingMode: textValue("rackBillingMode"),
+    rackPowerKw: numberValue("rackPowerKw"),
     rackCount: numberValue("rackCount"),
     rackRent: numberValue("rackRent"),
+    rackPackagePrice: numberValue("rackPackagePrice"),
     pue: numberValue("pue"),
     powerPrice: numberValue("powerPrice"),
     loadRate: numberValue("loadRate") / 100,
@@ -213,9 +224,6 @@ function buildState() {
     annualVoucher: numberValue("annualVoucher"),
     voucherRedeemRate: numberValue("voucherRedeemRate") / 100,
     voucherStartYear: numberValue("voucherStartYear"),
-    powerDiscount: numberValue("powerDiscount"),
-    powerDiscountRate: numberValue("powerDiscountRate") / 100,
-    powerDiscountStartYear: numberValue("powerDiscountStartYear"),
     rackSubsidy: numberValue("rackSubsidy"),
     rackSubsidyRate: numberValue("rackSubsidyRate") / 100,
     rackSubsidyStartYear: numberValue("rackSubsidyStartYear"),
@@ -285,10 +293,10 @@ function calculateFabric(state) {
   const topologyType =
     servers <= 8 ? "单层 IB Leaf" : servers <= 64 ? "两层 Leaf-Spine" : "Clos / Fat-tree";
 
-  const leafPrice = ibSpeed >= 800 ? 120 : 70;
-  const spinePrice = ibSpeed >= 800 ? 140 : 80;
-  const cablePrice = ibSpeed >= 800 ? 1.6 : 0.9;
-  const managementSwitchPrice = 3.5;
+  const leafPrice = state.leafSwitchPrice;
+  const spinePrice = state.spineSwitchPrice;
+  const cablePrice = state.ibCableUnitPrice;
+  const managementSwitchPrice = state.managementSwitchPrice;
 
   const bom = [
     {
@@ -305,8 +313,8 @@ function calculateFabric(state) {
       item: "IB Leaf 交换机",
       spec: `${ibSpeed}G InfiniBand，按逻辑 Leaf 层估算`,
       quantity: `${leafCount} 台`,
-      logic: "按服务器侧 IB 接入端口与 Leaf 下行端口容量估算",
-      note: `${topologyType} 接入层`,
+      logic: `数量按服务器侧 IB 接入口估算，单价 ${moneyWan(leafPrice)}/台`,
+      note: `${topologyType} 接入层，可按市场报价修正`,
       amount: leafCount * leafPrice,
     },
     {
@@ -314,8 +322,8 @@ function calculateFabric(state) {
       item: "IB Spine 交换机",
       spec: `${ibSpeed}G InfiniBand，按逻辑 Spine 层估算`,
       quantity: `${spineCount} 台`,
-      logic: spineCount > 0 ? `按 ${ratio}:1 收敛比估算 Leaf 上联` : "单层 Leaf 方案无需 Spine",
-      note: spineCount > 0 ? "用于跨 Leaf 东西向通信" : "小规模集群保留该行便于复核",
+      logic: spineCount > 0 ? `按 ${ratio}:1 收敛比估算 Leaf 上联，单价 ${moneyWan(spinePrice)}/台` : "单层 Leaf 方案无需 Spine",
+      note: spineCount > 0 ? "用于跨 Leaf 东西向通信，可按市场报价修正" : "小规模集群保留该行便于复核",
       amount: spineCount * spinePrice,
     },
     {
@@ -323,8 +331,8 @@ function calculateFabric(state) {
       item: "IB 线缆/光模块或 DAC/AOC",
       spec: `${ibSpeed}G 链路配套介质`,
       quantity: `${ibCableCount} 条/套`,
-      logic: "服务器至 Leaf 链路 + Leaf 至 Spine 链路估算",
-      note: "按链路介质估算",
+      logic: `服务器至 Leaf 链路 + Leaf 至 Spine 链路，单价 ${moneyWan(cablePrice)}/条`,
+      note: "单独评估光模块、DAC/AOC 与线缆成本",
       amount: ibCableCount * cablePrice,
     },
     {
@@ -332,7 +340,7 @@ function calculateFabric(state) {
       item: "管理面交换机",
       spec: "48 口以太网管理交换机",
       quantity: `${managementSwitches} 台`,
-      logic: "按 GPU 服务器管理口与管理节点端口容量估算",
+      logic: `按管理口容量估算，单价 ${moneyWan(managementSwitchPrice)}/台`,
       note: "独立管理面",
       amount: managementSwitches * managementSwitchPrice,
     },
@@ -402,7 +410,6 @@ function calculatePolicyCashflow(state) {
     state.revenueMode === "saving"
       ? annualPolicy(state.annualVoucher, state.voucherRedeemRate, state.voucherStartYear, state.years)
       : annualPolicy(0, state.voucherRedeemRate, state.voucherStartYear, state.years);
-  const power = annualPolicy(state.powerDiscount, state.powerDiscountRate, state.powerDiscountStartYear, state.years);
   const rack = annualPolicy(state.rackSubsidy, state.rackSubsidyRate, state.rackSubsidyStartYear, state.years);
   const loan = annualPolicy(
     state.loanInterestSubsidy,
@@ -413,7 +420,7 @@ function calculatePolicyCashflow(state) {
   const tax = annualPolicy(state.taxIncentive, state.taxIncentiveRate, state.taxIncentiveStartYear, state.years);
 
   const oneTimePolicies = [construction, equipment];
-  const annualPolicies = [voucher, power, rack, loan, tax];
+  const annualPolicies = [voucher, rack, loan, tax];
   const oneTimeAdjusted = oneTimePolicies.reduce((sum, policy) => sum + policy.adjusted, 0);
   const annualAdjusted = annualPolicies.reduce((sum, policy) => sum + policy.adjusted, 0);
   const nominal = [...oneTimePolicies, ...annualPolicies].reduce((sum, policy) => sum + policy.nominal, 0);
@@ -423,7 +430,6 @@ function calculatePolicyCashflow(state) {
     construction,
     equipment,
     voucher,
-    power,
     rack,
     loan,
     tax,
@@ -440,18 +446,25 @@ function calculate(state) {
   const fabric = calculateFabric(state);
   const computeCost = fabric.bom[0].amount;
   const managementCost = state.managementNodes * 18;
-  const hotStorageCost = state.hotStorageTb * state.hotStoragePrice;
-  const coldStorageCost = state.coldStorageTb * state.coldStoragePrice;
+  const includeStorage = state.storageScope === "included";
+  const optionalHotStorageCost = state.hotStorageTb * state.hotStoragePrice;
+  const optionalColdStorageCost = state.coldStorageTb * state.coldStoragePrice;
+  const optionalStorageCost = optionalHotStorageCost + optionalColdStorageCost;
+  const hotStorageCost = includeStorage ? optionalHotStorageCost : 0;
+  const coldStorageCost = includeStorage ? optionalColdStorageCost : 0;
   const directHardware = computeCost + managementCost + hotStorageCost + coldStorageCost + fabric.networkCost;
   const integrationCost = directHardware * state.integrationRate;
   const spareCost = directHardware * state.spareRate;
   const taxableCapex = directHardware + state.softwareCost + integrationCost + spareCost;
-  const taxCost = taxableCapex * state.taxRate;
-  const capex = taxableCapex + taxCost;
+  const capex = taxableCapex;
 
   const itPowerKw = fabric.servers * state.kwPerServer + state.managementNodes * 0.8;
   const annualPowerCost = (itPowerKw * state.pue * 24 * 365 * state.powerPrice * state.loadRate) / 10000;
-  const annualRackCost = state.rackCount * state.rackRent * 12;
+  const calculatedRackCount = Math.max(1, Math.ceil(itPowerKw / Math.max(1, state.rackPowerKw)));
+  const annualRackCost =
+    state.rackBillingMode === "power"
+      ? (itPowerKw * state.rackPackagePrice * 12) / 10000
+      : calculatedRackCount * state.rackRent * 12;
   const annualOpex = annualPowerCost + annualRackCost + state.networkOpex + state.opsCost + state.otherOpex;
   const totalOpex = annualOpex * state.years;
   const serviceCost = state.softwareCost + integrationCost + spareCost;
@@ -507,25 +520,24 @@ function calculate(state) {
       note: "估算级口径",
       amount: spareCost,
     },
-    {
-      category: "税费",
-      item: "增值税估算",
-      spec: `${(state.taxRate * 100).toFixed(1)}%`,
-      quantity: "1 项",
-      logic: "按投资额税率估算",
-      note: "正式测算需按采购合同修正",
-      amount: taxCost,
-    },
   ];
 
   return {
     ...fabric,
     computeCost,
+    managementCost,
     directHardware,
+    includeStorage,
+    optionalStorageCost,
+    hotStorageCost,
+    coldStorageCost,
+    integrationCost,
+    spareCost,
     serviceCost,
     capex,
     netInvestment,
     itPowerKw,
+    calculatedRackCount,
     annualPowerCost,
     annualRackCost,
     annualOpex,
@@ -607,24 +619,156 @@ function updateReport(state, result) {
     Number.isFinite(result.payback) && result.payback <= state.years
       ? `${result.payback.toFixed(1)} 年`
       : "测算周期内未完全回收";
+  const rackBillingText =
+    state.rackBillingMode === "power"
+      ? `${state.rackPackagePrice.toLocaleString("zh-CN")} 元/kW/月打包计费`
+      : `${result.calculatedRackCount} 个机柜 * ${moneyWan(state.rackRent)}/月`;
+  const storageNote = result.includeStorage ? "已纳入 CAPEX" : "可选项，未纳入默认 CAPEX";
+  const capexRows = [
+    ["GPU 服务器", moneyWan(result.computeCost), `${result.servers} 台 8GPU ${result.gpu.name} 模组`],
+    ["IB/管理网络", moneyWan(result.networkCost + result.managementCost), `IB 交换机、光模块/线缆与管理面交换机`],
+    ["存储投资", moneyWan(result.hotStorageCost + result.coldStorageCost), storageNote],
+    ["软件平台", moneyWan(state.softwareCost), "AI 平台、监控、安全与基础授权"],
+    ["集成实施", moneyWan(result.integrationCost), `${(state.integrationRate * 100).toFixed(1)}% 直接硬件投资`],
+    ["备品备件", moneyWan(result.spareCost), `${(state.spareRate * 100).toFixed(1)}% 直接硬件投资`],
+    ["CAPEX 合计", moneyWan(result.capex), "默认按设备采购含税口径"],
+    ["一次性政策后净投资", moneyWan(result.netInvestment), "CAPEX - 一次性已兑现补贴"],
+  ];
+  const opexRows = [
+    ["电费", moneyWan(result.annualPowerCost), `${result.itPowerKw.toFixed(1)} kW IT 功率，PUE ${state.pue}`],
+    ["机柜/场地", moneyWan(result.annualRackCost), rackBillingText],
+    ["专线/带宽", moneyWan(state.networkOpex), "年度网络运营成本"],
+    ["运维人员与服务", moneyWan(state.opsCost), "年度运维服务成本"],
+    ["保险及其他", moneyWan(state.otherOpex), "年度其他运营成本"],
+    ["年度 OPEX 合计", moneyWan(result.annualOpex), "年度运营成本小计"],
+    [`${state.years} 年 OPEX 合计`, moneyWan(result.totalOpex), "年度 OPEX * 测算周期"],
+  ];
+  const policyRows = [
+    ["一次性政策名义金额", moneyWan(result.policy.construction.nominal + result.policy.equipment.nominal), "建设补贴 + 设备购置补贴"],
+    ["一次性已兑现补贴", moneyWan(result.policy.oneTimeAdjusted), "只抵减净投资，不重复计入年度收入"],
+    ["年度政策名义金额", moneyWan(result.policy.voucher.nominal + result.policy.rack.nominal + result.policy.loan.nominal + result.policy.tax.nominal), "算力券、场地补贴、贴息、税收优惠"],
+    ["年度政策兑现收益", moneyWan(result.policy.annualAdjusted), "按兑现比例和生效年度折算"],
+    ["算力券客户抵扣额", moneyWan(result.cumulativeVoucherDiscount), "客户侧抵扣成交金额"],
+    ["算力券平台兑现额", moneyWan(result.cumulativeVoucherIncome), "平台侧按兑现比例形成政策回款"],
+    ["政策兑现缺口", moneyWan(result.policy.gap), "名义金额 - 风险调整后兑现收益"],
+  ];
+  const returnRows = [
+    ["裸设备租赁收入", moneyWan(result.cumulativeRentalIncome), `${moneyWan(state.deviceMonthlyRent)}/设备/月，出租率 ${(state.deviceLeaseRate * 100).toFixed(1)}%`],
+    ["风险调整后总收入", moneyWan(result.cumulativeIncome), "租赁收入 + 年度政策现金流"],
+    [`${state.years} 年 TCO`, moneyWan(result.tco), "政策后净投资 + 周期 OPEX"],
+    ["风险调整后净收益", moneyWan(result.netProfit), "总收入 - TCO"],
+    ["ROI", percent(result.roi * 100), "周期净收益 / 周期总投入"],
+    ["投资回收期", paybackText, "政策后净投资 / 年度经营现金流"],
+    ["单卡年化成本", moneyWan(result.annualCardCost), `${result.totalCards} 张 GPU 摊销口径`],
+    ["单卡小时成本", moneyYuan(result.cardHourCost), "按实际出租率折算"],
+  ];
+  const roiStatus =
+    result.annualNetCash <= 0
+      ? "年度经营现金流为负，当前方案在测算周期内不具备自然回收能力。"
+      : result.payback <= state.years
+        ? `按当前出租率与政策兑现假设，预计约 ${result.payback.toFixed(1)} 年回收，周期内具备完整回收条件。`
+        : `按当前出租率与政策兑现假设，回收期约 ${result.payback.toFixed(1)} 年，长于 ${state.years} 年测算周期。`;
+  const roiAdvice =
+    result.roi >= 0.15
+      ? "ROI 表现较积极，建议重点复核市场租赁需求、上架率稳定性与 GPU 设备报价锁定。"
+      : result.roi >= 0
+        ? "ROI 处于可讨论区间，建议优先优化设备采购价、出租率、机柜/电力成本和政策兑现确定性。"
+        : "ROI 为负，建议重新校正 CAPEX 单价、租赁价格、出租率和政策兑现比例后再进入投资决策。";
+  const policyAdvice =
+    result.policy.gap > 0
+      ? `政策名义金额与风险调整后收益存在 ${moneyWan(result.policy.gap)} 兑现缺口，建议把未兑现部分作为敏感性风险处理。`
+      : "政策假设下暂无兑现缺口，但仍建议在合同或批复文件中明确兑现年度与兑现条件。";
+  const cashflowAdvice =
+    result.annualNetCash > 0
+      ? `年度经营现金流约 ${moneyWan(result.annualNetCash)}，主要由租赁收入和年度政策现金流覆盖年度 OPEX。`
+      : `年度经营现金流约 ${moneyWan(result.annualNetCash)}，租赁收入和年度政策现金流尚不足以覆盖年度 OPEX。`;
+  const renderRows = (rows) =>
+    rows
+      .map(
+        ([item, amount, note]) => `
+          <tr>
+            <td>${item}</td>
+            <td>${amount}</td>
+            <td>${note}</td>
+          </tr>
+        `,
+      )
+      .join("");
 
   document.getElementById("reportPreview").innerHTML = `
-    <article>
-      <h4>1. 方案规划</h4>
-      <p>${state.projectName} 位于 ${state.location}，采用 ${textMaps.computeRoute[state.computeRoute]} 路线，按 ${textMaps.workload[state.workload]} 场景规划 ${result.servers} 台 ${result.gpu.name} 8GPU 服务器模组，形成 ${result.topologyType}，训练网络采用 ${result.ibSpeed}G InfiniBand，目标收敛比 ${result.ratio}:1。</p>
-    </article>
-    <article>
-      <h4>2. 投资估算</h4>
-      <p>硬件 BOM 投资约 ${moneyWan(result.directHardware)}，软件/服务成本约 ${moneyWan(result.serviceCost)}，含税初始 CAPEX 约 ${moneyWan(result.capex)}；年度 OPEX 约 ${moneyWan(result.annualOpex)}，主要由机柜、电力、负载、带宽、运维和保险构成。</p>
-    </article>
-    <article>
-      <h4>3. 政策与商务变量</h4>
-      <p>商务模式为${textMaps.revenueMode[state.revenueMode]}，裸设备租赁按每设备/月 ${moneyWan(state.deviceMonthlyRent)}、出租率/上架率 ${(state.deviceLeaseRate * 100).toFixed(1)}% 测算；政策名义金额约 ${moneyWan(result.policy.nominal)}，按兑现比例与兑现年度折算后约 ${moneyWan(result.policy.adjusted)}，兑现缺口约 ${moneyWan(result.policy.gap)}。</p>
-    </article>
-    <article>
-      <h4>4. 投资收益评估</h4>
-      <p>一次性政策兑现后净投资约 ${moneyWan(result.netInvestment)}，${state.years} 年 TCO 约 ${moneyWan(result.tco)}，累计裸设备租赁收入约 ${moneyWan(result.cumulativeRentalIncome)}；算力券客户抵扣约 ${moneyWan(result.cumulativeVoucherDiscount)}，平台兑现约 ${moneyWan(result.cumulativeVoucherIncome)}。风险调整后净收益约 ${moneyWan(result.netProfit)}，ROI 为 ${percent(result.roi * 100)}，投资回收期为 ${paybackText}。</p>
-    </article>
+    <div class="summary-strip">
+      <article>
+        <span>项目方案</span>
+        <strong>${state.projectName}</strong>
+        <p>${state.location} / ${textMaps.computeRoute[state.computeRoute]} / ${textMaps.workload[state.workload]}</p>
+      </article>
+      <article>
+        <span>建设规模</span>
+        <strong>${result.servers} 台 / ${result.totalCards} 张 GPU</strong>
+        <p>${result.gpu.name}，${formatPf16(result.denseFp16Tflops)}</p>
+      </article>
+      <article>
+        <span>组网方案</span>
+        <strong>${result.topologyType}</strong>
+        <p>${result.ibSpeed}G IB，目标收敛比 ${result.ratio}:1</p>
+      </article>
+      <article>
+        <span>商务模式</span>
+        <strong>${textMaps.revenueMode[state.revenueMode]}</strong>
+        <p>测算周期 ${state.years} 年</p>
+      </article>
+    </div>
+    <section class="summary-block">
+      <h4>CAPEX 投资小计</h4>
+      <div class="summary-table-wrap">
+        <table class="summary-table">
+          <thead>
+            <tr><th>投资项</th><th>金额</th><th>测算口径</th></tr>
+          </thead>
+          <tbody>${renderRows(capexRows)}</tbody>
+        </table>
+      </div>
+    </section>
+    <section class="summary-block">
+      <h4>OPEX 年度运营小计</h4>
+      <div class="summary-table-wrap">
+        <table class="summary-table">
+          <thead>
+            <tr><th>运营项</th><th>金额</th><th>测算口径</th></tr>
+          </thead>
+          <tbody>${renderRows(opexRows)}</tbody>
+        </table>
+      </div>
+    </section>
+    <section class="summary-block">
+      <h4>政策抵扣与兑现</h4>
+      <div class="summary-table-wrap">
+        <table class="summary-table">
+          <thead>
+            <tr><th>政策项</th><th>金额</th><th>现金流口径</th></tr>
+          </thead>
+          <tbody>${renderRows(policyRows)}</tbody>
+        </table>
+      </div>
+    </section>
+    <section class="summary-block">
+      <h4>投资回报测算</h4>
+      <div class="summary-table-wrap">
+        <table class="summary-table">
+          <thead>
+            <tr><th>回报项</th><th>结果</th><th>计算口径</th></tr>
+          </thead>
+          <tbody>${renderRows(returnRows)}</tbody>
+        </table>
+      </div>
+    </section>
+    <section class="summary-analysis">
+      <h4>ROI 分析意见</h4>
+      <p>${roiStatus}</p>
+      <p>${cashflowAdvice}</p>
+      <p>${roiAdvice}</p>
+      <p>${policyAdvice}</p>
+    </section>
   `;
 }
 
@@ -662,6 +806,17 @@ function updateInputAvailability(state) {
     input.disabled = state.revenueMode !== "saving";
     input.title = state.revenueMode === "saving" ? "租赁 + 算力券协同模式下参与现金流" : "裸设备租赁模式下不参与现金流";
   });
+
+  const rackCountInput = document.getElementById("rackCount");
+  rackCountInput.disabled = true;
+  rackCountInput.title = "按 IT 功耗与单机柜功耗自动估算";
+
+  const rackRentInput = document.getElementById("rackRent");
+  const rackPackageInput = document.getElementById("rackPackagePrice");
+  rackRentInput.disabled = state.rackBillingMode === "power";
+  rackPackageInput.disabled = state.rackBillingMode !== "power";
+  rackRentInput.title = state.rackBillingMode === "power" ? "按功率打包价模式下不参与计算" : "按机柜月租模式下参与计算";
+  rackPackageInput.title = state.rackBillingMode === "power" ? "按 IT 功率计费，单位为元/kW/月" : "按机柜月租模式下不参与计算";
 }
 
 function render() {
@@ -670,6 +825,10 @@ function render() {
 
   if (state.clusterSizingMode === "auto" && numberValue("serverCount") !== result.servers) {
     document.getElementById("serverCount").value = result.servers;
+  }
+
+  if (numberValue("rackCount") !== result.calculatedRackCount) {
+    document.getElementById("rackCount").value = result.calculatedRackCount;
   }
 
   updateInputAvailability(state);
