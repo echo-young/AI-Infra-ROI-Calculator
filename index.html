@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>智算投资规划工具</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=20260607-summary-table" />
   </head>
   <body>
     <main class="app-shell">
@@ -171,6 +171,22 @@
                   </select>
                 </label>
                 <label>
+                  IB Leaf 单价 万元/台
+                  <input id="leafSwitchPrice" type="number" min="0" step="1" value="70" />
+                </label>
+                <label>
+                  IB Spine 单价 万元/台
+                  <input id="spineSwitchPrice" type="number" min="0" step="1" value="80" />
+                </label>
+                <label>
+                  光模块/线缆单价 万元/条
+                  <input id="ibCableUnitPrice" type="number" min="0" step="0.1" value="0.9" />
+                </label>
+                <label>
+                  管理交换机单价 万元/台
+                  <input id="managementSwitchPrice" type="number" min="0" step="0.1" value="3.5" />
+                </label>
+                <label>
                   扩容预期
                   <select id="expansionPlan">
                     <option value="standard">常规扩容</option>
@@ -284,6 +300,13 @@
               <input id="managementNodes" type="number" min="0" value="3" />
             </label>
             <label>
+              存储投资口径
+              <select id="storageScope">
+                <option value="excluded">可选项，不纳入默认 CAPEX</option>
+                <option value="included">纳入 CAPEX 测算</option>
+              </select>
+            </label>
+            <label>
               高性能存储 TB
               <input id="hotStorageTb" type="number" min="0" value="800" />
             </label>
@@ -311,10 +334,6 @@
               备品备件比例 %
               <input id="spareRate" type="number" min="0" step="0.5" value="2" />
             </label>
-            <label>
-              增值税率 %
-              <input id="taxRate" type="number" min="0" step="0.5" value="13" />
-            </label>
           </div>
 
           <div class="subsection-heading">
@@ -322,12 +341,27 @@
           </div>
           <div class="form-grid">
             <label>
-              机柜数量
+              机柜计费方式
+              <select id="rackBillingMode">
+                <option value="rack">按机柜月租</option>
+                <option value="power">按功率打包价</option>
+              </select>
+            </label>
+            <label>
+              单机柜功耗 kW/柜
+              <input id="rackPowerKw" type="number" min="1" step="1" value="30" />
+            </label>
+            <label>
+              机柜数量（自动估算）
               <input id="rackCount" type="number" min="1" value="12" />
             </label>
             <label>
               单柜月租 万元
               <input id="rackRent" type="number" min="0" step="0.1" value="1.8" />
+            </label>
+            <label>
+              打包价 元/kW/月
+              <input id="rackPackagePrice" type="number" min="0" step="1" value="900" />
             </label>
             <label>
               PUE
@@ -413,15 +447,11 @@
             <div class="policy-grid-head">政策项</div>
             <div class="policy-grid-head">年度名义金额 万元/年</div>
             <div class="policy-grid-head">兑现比例 %</div>
-            <div class="policy-grid-head">起始年度</div>
+            <div class="policy-grid-head">连续生效起始年</div>
             <div>年度算力券</div>
             <input id="annualVoucher" type="number" min="0" value="120" />
             <input id="voucherRedeemRate" type="number" min="0" max="100" value="75" />
             <input id="voucherStartYear" type="number" min="1" value="1" />
-            <div>电价优惠</div>
-            <input id="powerDiscount" type="number" min="0" value="0" />
-            <input id="powerDiscountRate" type="number" min="0" max="100" value="80" />
-            <input id="powerDiscountStartYear" type="number" min="1" value="1" />
             <div>机柜/场地补贴</div>
             <input id="rackSubsidy" type="number" min="0" value="0" />
             <input id="rackSubsidyRate" type="number" min="0" max="100" value="80" />
@@ -496,13 +526,13 @@
           </div>
 
           <div class="subsection-heading">
-            <h4>四段式结论预览</h4>
+            <h4>汇总表格结论</h4>
           </div>
           <div id="reportPreview" class="report-preview"></div>
         </section>
       </section>
     </main>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=20260607-summary-table"></script>
   </body>
 </html>
